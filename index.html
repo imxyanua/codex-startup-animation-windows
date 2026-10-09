@@ -13,7 +13,7 @@
 <body>
   <main class="preview">
     <header class="preview-heading"><span><i></i> AEMEATH</span><span>STARTUP SEQUENCE / 01</span></header>
-    <section class="window" aria-label="爱弥斯启动动画">
+    <section class="window" data-effect="seeklight" aria-label="爱弥斯启动动画">
       <div class="end-screen" aria-live="polite">
         <span class="end-star">✧</span>
         <p class="eyebrow">CONNECTION ESTABLISHED</p>
@@ -28,6 +28,7 @@
         <div class="scanlines"></div>
         <div class="light-sweep"></div>
         <div class="particles"></div>
+        <div class="starfield" aria-hidden="true"></div>
         <div class="hud">
           <div class="corner top-left"></div><div class="corner top-right"></div>
           <div class="corner bottom-left"></div><div class="corner bottom-right"></div>
@@ -43,6 +44,7 @@
         <div class="boot-corners"><i class="corner top-left"></i><i class="corner top-right"></i><i class="corner bottom-left"></i><i class="corner bottom-right"></i></div>
         <div class="intro">
           <div class="pulse"><i></i><i></i><b></b></div>
+          <div class="seek-core" aria-hidden="true"><i></i><b></b></div>
           <div class="identity">
             <div class="radar">
               <svg class="dial" viewBox="0 0 400 400"><circle cx="200" cy="200" r="177"/><circle class="dashed" cx="200" cy="200" r="151"/><g class="ticks"></g><path class="crosshair" d="M200 9V61 M200 339V391 M9 200H61 M339 200H391"/></svg>
@@ -54,7 +56,8 @@
             <div class="boot-caption">CODEX INITIALIZE / TYPE-0</div>
           </div>
         </div>
-        <div class="boot-logs"><div>&gt; MAGI SYSTEM · CASPER / MELCHIOR / BALTHASAR</div><div>&gt; loading renderer surface ........ ok</div><div>&gt; entry plug depth 21.6 ........... ok</div><div>&gt; LCL pressure nominal</div></div>
+        <div class="boot-logs classic-logs"><div>&gt; MAGI SYSTEM · CASPER / MELCHIOR / BALTHASAR</div><div>&gt; loading renderer surface ........ ok</div><div>&gt; entry plug depth 21.6 ........... ok</div><div>&gt; LCL pressure nominal</div></div>
+        <div class="boot-logs seek-logs"><div>&gt; catalog wake · residual heat</div><div>&gt; proper motion matched .......... ok</div><div>&gt; orbit locked on a single face</div><div>&gt; light, stay</div></div>
         <div class="transition-flash" aria-hidden="true"></div>
       </div>
       <div class="shutter-line" aria-hidden="true"></div>
@@ -65,7 +68,11 @@
       <dialog id="settings-dialog" aria-labelledby="settings-title">
         <form method="dialog"><button class="settings-close" aria-label="关闭图片设置">×</button></form>
         <p class="eyebrow">YOUR STARTUP</p><h2 id="settings-title">换成你喜欢的画面</h2>
-        <p class="settings-description">自定义两张图片和下方文字，留空可隐藏对应文字。</p>
+        <p class="settings-description">自定义两张图片、开场效果和下方文字，留空可隐藏对应文字。</p>
+        <div class="effect-choices" role="radiogroup" aria-label="开场效果">
+          <label class="effect-choice"><input type="radio" name="effect" value="classic"><span>原版序列</span><small>脉冲 · 碎片 · 线稿</small></label>
+          <label class="effect-choice"><input type="radio" name="effect" value="seeklight" checked><span>寻光</span><small>星点 · 连线 · 显影</small></label>
+        </div>
         <div class="image-choices">
           <label class="image-choice"><img id="avatar-preview" src="assets/avatar.jpg" alt="当前头像"><span>前半段头像</span><small>方形图片效果最好</small><span class="choose-label">更换头像</span><input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp" aria-label="更换头像"></label>
           <label class="image-choice"><img id="artwork-preview" src="assets/artwork.jpg" alt="当前背景"><span>后半段背景</span><small>推荐 3:2 横图 · 自动生成线稿</small><span class="choose-label">更换背景</span><input id="artwork-file" type="file" accept="image/png,image/jpeg,image/webp" aria-label="更换背景"></label>
