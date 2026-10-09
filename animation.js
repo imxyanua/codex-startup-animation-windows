@@ -534,7 +534,9 @@
     releaseIdentityTexture();
     art.src=images.artwork||assets.artwork;$('.avatar').src=images.avatar||assets.avatar;
     await Promise.all([art,$('.avatar')].map(img=>img.decode()));
-    paths=preparePaths(images.contours||window.CONTOUR_PATHS||[]);fragments=prepareFragments(paths);prepareConstellation(fragments);lastTrace=-1;
+    const traced=window.imageSettings&&window.imageSettings.traceImage?window.imageSettings.traceImage(art):[];
+    const raw=traced.length?traced:(images.contours||window.CONTOUR_PATHS||[]);
+    paths=preparePaths(raw);fragments=prepareFragments(paths);prepareConstellation(fragments);lastTrace=-1;
     if(!params.has('effect'))setEffect(images.effect);
     applyLocale((params.has('lang')||params.has('locale'))?locale:images.locale);
     if(!paths.length)throw new Error(t('missingContours'));

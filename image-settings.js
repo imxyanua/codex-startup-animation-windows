@@ -38,7 +38,21 @@
     for(let i=0;i<count;i++)if(edge[i]&&!visited[i])walk(i);
     return paths.sort((a,b)=>b.length-a.length).slice(0,1200);
   }
-  if(typeof module!=='undefined') {module.exports={vectorize};return;}
+  function traceImage(img){
+    try{
+      if(!img||!img.naturalWidth)return [];
+      const small=document.createElement('canvas');
+      small.width=768;small.height=512;
+      const ctx=small.getContext('2d',{willReadFrequently:true});
+      ctx.fillStyle='#08060d';
+      ctx.fillRect(0,0,768,512);
+      ctx.drawImage(img,0,0,768,512);
+      return vectorize(ctx.getImageData(0,0,768,512).data,768,512);
+    }catch{
+      return [];
+    }
+  }
+  if(typeof module!=='undefined') {module.exports={vectorize,traceImage};return;}
   function text(code,fallback){
     const i18n=scope.aemeathI18n;
     return i18n?i18n.t(scope.imageSettings&&scope.imageSettings.locale,code):fallback;
@@ -69,13 +83,11 @@
       ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
       const image=canvas.toDataURL('image/png');
       if(kind==='avatar')return {avatar:image};
-      const small=document.createElement('canvas');small.width=768;small.height=512;
-      const smallCtx=small.getContext('2d',{willReadFrequently:true});smallCtx.drawImage(canvas,0,0,768,512);
-      const contours=vectorize(smallCtx.getImageData(0,0,768,512).data,768,512);
+      const contours=traceImage(canvas);
       if(!contours.length)throw new Error(text('fewContours','图片轮廓太少，请选择边缘更清晰的背景。'));
       return {artwork:image,contours};
     }catch(error){throw new Error(error.message||text('unreadable','图片无法读取，请换一张图片。'));}
     finally{URL.revokeObjectURL(url);}
   }
-  scope.imageSettings={load:()=>database('read'),save:images=>database('write',images),importImage,locale:'zh'};
+  scope.imageSettings={load:()=>database('read'),save:images=>database('write',images),importImage,traceImage,locale:'zh'};
 })(typeof window==='undefined'?{}:window);

@@ -173,6 +173,22 @@ test('自定义背景轮廓可从像素生成',()=>{
   assert.equal(paths[0][0].length,2);
 });
 
+test('线稿轮廓跟随当前图片，而不是固定素材',()=>{
+  const width=64,height=48;
+  function bar(vertical){
+    const data=new Uint8ClampedArray(width*height*4);
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      const i=(y*width+x)*4,on=vertical?(x>28&&x<36):(y>20&&y<28);
+      data[i]=data[i+1]=data[i+2]=on?255:0;data[i+3]=255;
+    }
+    return vectorize(data,width,height);
+  }
+  const vertical=bar(true),horizontal=bar(false);
+  assert.ok(vertical.length>0);
+  assert.ok(horizontal.length>0);
+  assert.notDeepEqual(vertical[0],horizontal[0]);
+});
+
 test('Ctrl+Alt+B 菜单可切换 tiếng Việt',async()=>{
   const {runSmoke}=await import('../windows/smoke.mjs');
   const {findEdge}=await import('../windows/preview.mjs');
