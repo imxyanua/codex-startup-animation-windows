@@ -19,6 +19,7 @@ import {previewArgs} from '../windows/preview.mjs';
 const require=createRequire(import.meta.url);
 const {vectorize,imageKind}=require('../image-settings.js');
 const {normalize:normalizeLocale,t:translate}=require('../locale.js');
+const {normalize:normalizeAccent,parseHex:parseAccentHex,resolve:resolveAccent}=require('../accent.js');
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
 
 test('调试参数只绑定 127.0.0.1',()=>{
@@ -141,6 +142,18 @@ test('预览页筛选只接受本机动画页',()=>{
   assert.ok(args.some(value=>value.startsWith('--app=http://127.0.0.1:8765/')));
 });
 
+test('画面色彩支持预设和自定义 hex',()=>{
+  assert.equal(normalizeAccent('frost'),'frost');
+  assert.equal(normalizeAccent('amber'),'amber');
+  assert.equal(normalizeAccent('custom'),'custom');
+  assert.equal(normalizeAccent('nope'),'rose');
+  assert.equal(parseAccentHex('#E9A8BF'),'#e9a8bf');
+  assert.equal(parseAccentHex('zzz'),'');
+  assert.equal(resolveAccent('frost').accent,'#b7d8ea');
+  assert.equal(resolveAccent('custom','#112233').accent,'#112233');
+  assert.equal(resolveAccent('custom','bad').accent,'#e9a8bf');
+});
+
 test('菜单支持中文和越南语',()=>{
   assert.equal(normalizeLocale('vi'),'vi');
   assert.equal(normalizeLocale('zh'),'zh');
@@ -159,6 +172,9 @@ test('注入脚本包含语言选项和越南语词条',async()=>{
   assert.match(source,/Tiếng Việt/);
   assert.match(source,/Đổi thành hình bạn thích/);
   assert.match(source,/aemeathI18n/);
+  assert.match(source,/name=\\"accent\\"/);
+  assert.match(source,/value=\\"frost\\"/);
+  assert.match(source,/aemeathAccent/);
 });
 
 test('导入图片认 MIME 和 Windows 空 type/.jpg',()=>{

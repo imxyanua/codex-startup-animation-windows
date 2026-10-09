@@ -19,6 +19,25 @@
   const normalizeLocale = value => i18n.normalize(value);
   let locale = normalizeLocale(params.get('lang') || params.get('locale'));
   const t = key => i18n.t(locale, key);
+  const accentApi = window.aemeathAccent || {normalize: value => value === 'custom' || value === 'frost' || value === 'amber' ? value : 'rose', parseHex: value => /^#?[0-9a-f]{6}$/i.test(String(value||'')) ? '#'+String(value).replace('#','').toLowerCase() : '', resolve: () => ({preset:'rose',accent:'#e9a8bf',line:'#c8c0cd',hud:'#fce9f0',glow:'#ee96bc',cool:'#8cc3cd'})};
+  const normalizeAccent = value => accentApi.normalize(value);
+  const parseAccentHex = value => accentApi.parseHex ? accentApi.parseHex(value) : '';
+  const resolveAccent = (name, color) => accentApi.resolve(name, color);
+  function accentPaint(name, fallback) {
+    return getComputedStyle(root).getPropertyValue(name).trim() || fallback;
+  }
+  function applyAccent(images) {
+    const pack = resolveAccent(images && images.accent, images && images.accentColor);
+    root.style.setProperty('--accent', pack.accent);
+    root.style.setProperty('--accent-line', pack.line);
+    root.style.setProperty('--accent-hud', pack.hud);
+    root.style.setProperty('--accent-glow', pack.glow);
+    root.style.setProperty('--accent-cool', pack.cool);
+    root.dataset.accent = pack.preset;
+    lastTrace = -1;
+    const customSwatch = $('.accent-swatch-custom');
+    if (customSwatch) customSwatch.style.background = pack.preset === 'custom' ? pack.accent : '';
+  }
   let skippedFinish = false;
   const assets=window.AEMEATH_ASSETS||{artwork:'assets/artwork.jpg',avatar:'assets/avatar.jpg'};
   if(embedded)document.body.classList.add('embedded');
@@ -192,7 +211,7 @@
     const stamp=p===1?1:p+drift*.00001;
     if(stamp===lastTrace)return;lastTrace=stamp;
     ctx.clearRect(0,0,1536,1024);
-    ctx.strokeStyle='#c8c0cd';ctx.lineWidth=1.25;ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.strokeStyle=accentPaint('--accent-line','#c8c0cd');ctx.lineWidth=1.25;ctx.lineCap='round';ctx.lineJoin='round';
     if(p===1){
       ctx.globalAlpha=1;paths.forEach(path=>ctx.stroke(path.full));
     }else{
@@ -244,7 +263,7 @@
     ctx.lineCap='round';ctx.lineJoin='round';
     if(spread>.05){
       const glow=smooth((spread-.05)/.3);
-      ctx.strokeStyle='#d5e8f0';ctx.lineWidth=1.05;ctx.globalAlpha=.55*glow;
+      ctx.strokeStyle=accentPaint('--accent-cool','#d5e8f0');ctx.lineWidth=1.05;ctx.globalAlpha=.55*glow;
       ctx.beginPath();
       for(const [a,b] of constellation.links){
         const sa=constellation.stars[a],sb=constellation.stars[b];
@@ -256,13 +275,13 @@
       for(const star of constellation.stars){
         const on=starWeight(star,p);if(on<=.02)continue;
         const twinkle=.65+.35*Math.sin(drift*1.4+star.seed*8);
-        ctx.globalAlpha=on*glow*twinkle;ctx.fillStyle='#f3fbff';
+        ctx.globalAlpha=on*glow*twinkle;ctx.fillStyle=accentPaint('--accent-hud','#f3fbff');
         ctx.beginPath();ctx.arc(star.x,star.y,1.15+on,0,Math.PI*2);ctx.fill();
       }
       ctx.globalAlpha=1;
     }
     if(p>.86){
-      ctx.globalAlpha=.22*smooth((p-.86)/.14);ctx.strokeStyle='#c8c0cd';ctx.lineWidth=1.1;
+      ctx.globalAlpha=.22*smooth((p-.86)/.14);ctx.strokeStyle=accentPaint('--accent-line','#c8c0cd');ctx.lineWidth=1.1;
       paths.forEach(path=>ctx.stroke(path.full));ctx.globalAlpha=1;
     }
     canvas.dataset.progress=p.toFixed(3);canvas.dataset.fragments=String(constellation.stars.length);
@@ -507,6 +526,10 @@
     document.querySelectorAll('input[name=effect]').forEach(node=>{node.checked=node.value===chosen;});
     const chosenLocale=normalizeLocale(pendingImages.locale);
     document.querySelectorAll('input[name=locale]').forEach(node=>{node.checked=node.value===chosenLocale;});
+    const chosenAccent=normalizeAccent(pendingImages.accent);
+    document.querySelectorAll('input[name=accent]').forEach(node=>{node.checked=node.value===chosenAccent;});
+    const pack=resolveAccent(pendingImages.accent,pendingImages.accentColor);
+    $('#accent-color').value=pack.accent;
     for(const field of textFields)$(field.input).value=textValue(pendingImages,field);
   }
   function setEffect(name){
@@ -522,6 +545,7 @@
     pendingImages.locale=normalizeLocale((params.has('lang')||params.has('locale'))?locale:pendingImages.locale);
     thumbnails();
     applyLocale(pendingImages.locale);
+    applyAccent(pendingImages);
     setStatus('openHint');
     settings.dataset.opened='1';
     settings.returnValue='';settings.showModal();send('settings-open');
@@ -538,6 +562,7 @@
     const raw=traced.length?traced:(images.contours||window.CONTOUR_PATHS||[]);
     paths=preparePaths(raw);fragments=prepareFragments(paths);prepareConstellation(fragments);lastTrace=-1;
     if(!params.has('effect'))setEffect(images.effect);
+    applyAccent((params.has('accent')||params.has('color'))?{accent:params.get('accent'),accentColor:params.get('color')}:images);
     applyLocale((params.has('lang')||params.has('locale'))?locale:images.locale);
     if(!paths.length)throw new Error(t('missingContours'));
     for(const field of textFields)$(field.target).textContent=textValue(images,field);
@@ -566,6 +591,15 @@
     pendingImages.locale=normalizeLocale(node.value);
     applyLocale(pendingImages.locale);
   }));
+  document.querySelectorAll('input[name=accent]').forEach(node=>node.addEventListener('change',()=>{
+    pendingImages.accent=normalizeAccent(node.value);
+    applyAccent(pendingImages);thumbnails();
+  }));
+  $('#accent-color').addEventListener('input',event=>{
+    pendingImages.accent='custom';
+    pendingImages.accentColor=parseAccentHex(event.target.value)||'#e9a8bf';
+    applyAccent(pendingImages);thumbnails();
+  });
   $('#image-settings').addEventListener('click',openSettings);
   if(window.AEMEATH_EXTERNAL){$('#restore-appearance').hidden=false;$('#restore-appearance').addEventListener('click',()=>send('restore'));}
   settings.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
@@ -588,11 +622,13 @@
     }catch(error){setStatus('',error.message);}
     finally{setBusy(false);event.target.value='';}
   });
-  $('#reset-images').addEventListener('click',()=>{pendingImages={effect:'seeklight',locale:normalizeLocale(pendingImages.locale)};thumbnails();setStatus('resetHint');});
+  $('#reset-images').addEventListener('click',()=>{pendingImages={effect:'seeklight',locale:normalizeLocale(pendingImages.locale),accent:normalizeAccent(pendingImages.accent),accentColor:pendingImages.accentColor};thumbnails();applyAccent(pendingImages);setStatus('resetHint');});
   $('#preview-images').addEventListener('click',async()=>{
     setBusy(true);setStatus('saving');
     try{
       pendingImages.locale=normalizeLocale(pendingImages.locale);
+      pendingImages.accent=normalizeAccent(pendingImages.accent);
+      if(pendingImages.accent==='custom')pendingImages.accentColor=parseAccentHex(pendingImages.accentColor)||'#e9a8bf';
       delete pendingImages.contours;
       await applyImages(pendingImages);await window.imageSettings.save(pendingImages);savedImages={...pendingImages};settings.close('preview');
     }catch(error){await applyImages(savedImages);setStatus('saveFail',error.message);}

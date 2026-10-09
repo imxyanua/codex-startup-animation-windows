@@ -75,6 +75,7 @@ node windows\preview.mjs
 | 背景显现程度 | 默认 42%，0% 关闭壁纸 |
 | 开场动画时长 | 默认 12 秒；6–20 秒可调 |
 | 开场效果 | 原版序列，或「寻光」（星点、连线、从中心显影） |
+| 画面色彩 | 当前粉 / 冷白 / 琥珀，或自定义一个强调色；只改线稿和 HUD，不改照片 |
 | 界面语言 | 中文或 Tiếng Việt；保存在本机 |
 | 保存并预览 | 保存后重播 |
 | Esc / × | 放弃未保存修改 |
@@ -210,6 +211,7 @@ Trong hoặc sau animation, bấm **Ctrl+Alt+B**.
 | Độ hiện nền | Mặc định 42%, 0% là tắt wallpaper |
 | Thời lượng | Mặc định 12 giây, chỉnh 6–20 giây |
 | Hiệu ứng | Chuỗi gốc, hoặc「寻光」 (sao, nối nét, hiện ảnh từ giữa) |
+| Màu overlay | Hồng hiện tại / trắng lạnh / hổ phách, hoặc một màu tự chọn; chỉ nhuộm nét và HUD |
 | Ngôn ngữ giao diện | Tiếng Trung hoặc Tiếng Việt; lưu trên máy |
 | Lưu và xem lại | Lưu rồi phát lại |
 | Esc / × | Hủy thay đổi chưa lưu |
