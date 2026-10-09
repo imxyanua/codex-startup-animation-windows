@@ -12,7 +12,7 @@
 
 ### 效果
 
-启动序列约 12 秒：脉冲加载 → 头像与旋转圆环 → 碎片散开 → 从左到右汇聚成角色线稿 → 彩色背景显现 → 向中央收拢并进入官方页面。头像、背景、标题和字幕都可以在设置中更换。Esc 可跳过。
+默认「寻光」约 12 秒。前半段（头像）和后半段（线稿显影）可分开选：原版、寻光、涟漪、雾散。头像、背景、标题、字幕和强调色都可以换。Esc 可跳过。
 
 ### 功能
 
@@ -74,7 +74,8 @@ node windows\preview.mjs
 | 标题与字幕 | 修改两段动画的文字，留空则隐藏 |
 | 背景显现程度 | 默认 42%，0% 关闭壁纸 |
 | 开场动画时长 | 默认 12 秒；6–20 秒可调 |
-| 开场效果 | 原版序列，或「寻光」（星点、连线、从中心显影） |
+| 前半段出现 | 原版 / 寻光 / 涟漪 / 雾散（头像与脉冲） |
+| 后半段出现 | 原版 / 寻光 / 涟漪 / 雾散（线稿与显影） |
 | 画面色彩 | 当前粉 / 冷白 / 琥珀，或自定义一个强调色；只改线稿和 HUD，不改照片 |
 | 界面语言 | 中文或 Tiếng Việt；保存在本机 |
 | 保存并预览 | 保存后重播 |
@@ -148,7 +149,7 @@ Thêm đoạn animation khởi động tùy chỉnh cho ứng dụng desktop Cod
 
 ### Hiệu ứng
 
-Khoảng 12 giây: xung tải → avatar và vòng quay → mảnh vỡ → nét tuyến từ trái sang phải → nền màu hiện ra → thu về giữa rồi vào trang chính thức. Đổi được avatar, nền, tiêu đề, phụ đề. Bấm Esc để bỏ qua.
+Mặc định「寻光」khoảng 12 giây. Nửa đầu (avatar) và nửa sau (nét, hiện ảnh) chọn riêng: gốc, 寻光, gợn sóng, sương tan. Đổi được avatar, nền, chữ và màu nhấn. Esc bỏ qua.
 
 ### Tính năng
 
@@ -210,7 +211,8 @@ Trong hoặc sau animation, bấm **Ctrl+Alt+B**.
 | Tiêu đề / phụ đề | Để trống thì ẩn |
 | Độ hiện nền | Mặc định 42%, 0% là tắt wallpaper |
 | Thời lượng | Mặc định 12 giây, chỉnh 6–20 giây |
-| Hiệu ứng | Chuỗi gốc, hoặc「寻光」 (sao, nối nét, hiện ảnh từ giữa) |
+| Nửa đầu | Gốc / 寻光 / gợn sóng / sương tan (avatar) |
+| Nửa sau | Gốc / 寻光 / gợn sóng / sương tan (nét và hiện ảnh) |
 | Màu overlay | Hồng hiện tại / trắng lạnh / hổ phách, hoặc một màu tự chọn; chỉ nhuộm nét và HUD |
 | Ngôn ngữ giao diện | Tiếng Trung hoặc Tiếng Việt; lưu trên máy |
 | Lưu và xem lại | Lưu rồi phát lại |

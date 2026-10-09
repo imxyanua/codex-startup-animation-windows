@@ -15,7 +15,7 @@
 <body>
   <main class="preview">
     <header class="preview-heading"><span><i></i> AEMEATH</span><span>STARTUP SEQUENCE / 01</span></header>
-    <section class="window" data-effect="seeklight" aria-label="爱弥斯启动动画" data-i18n-aria="windowAria">
+    <section class="window" data-effect="seeklight" data-intro="seeklight" data-reveal="seeklight" aria-label="爱弥斯启动动画" data-i18n-aria="windowAria">
       <div class="end-screen" aria-live="polite">
         <span class="end-star">✧</span>
         <p class="eyebrow">CONNECTION ESTABLISHED</p>
@@ -60,6 +60,7 @@
         </div>
         <div class="boot-logs classic-logs"><div>&gt; MAGI SYSTEM · CASPER / MELCHIOR / BALTHASAR</div><div>&gt; loading renderer surface ........ ok</div><div>&gt; entry plug depth 21.6 ........... ok</div><div>&gt; LCL pressure nominal</div></div>
         <div class="boot-logs seek-logs"><div>&gt; catalog wake · residual heat</div><div>&gt; proper motion matched .......... ok</div><div>&gt; orbit locked on a single face</div><div>&gt; light, stay</div></div>
+        <div class="effect-veil" aria-hidden="true"></div>
         <div class="transition-flash" aria-hidden="true"></div>
       </div>
       <div class="shutter-line" aria-hidden="true"></div>
@@ -76,10 +77,19 @@
           <label class="effect-choice"><input type="radio" name="locale" value="zh" checked><span>中文</span><small data-i18n="localeZhHint">界面与提示</small></label>
           <label class="effect-choice"><input type="radio" name="locale" value="vi"><span>Tiếng Việt</span><small data-i18n="localeViHint">Giao diện và gợi ý</small></label>
         </div>
-        <p class="settings-section" data-i18n="effectGroup">开场效果</p>
-        <div class="effect-choices" role="radiogroup" aria-label="开场效果" data-i18n-aria="effectGroup">
-          <label class="effect-choice"><input type="radio" name="effect" value="classic"><span data-i18n="effectClassic">原版序列</span><small data-i18n="effectClassicHint">脉冲 · 碎片 · 线稿</small></label>
-          <label class="effect-choice"><input type="radio" name="effect" value="seeklight" checked><span data-i18n="effectSeek">寻光</span><small data-i18n="effectSeekHint">星点 · 连线 · 显影</small></label>
+        <p class="settings-section" data-i18n="introGroup">前半段出现</p>
+        <div class="effect-choices effect-row" role="radiogroup" aria-label="前半段出现" data-i18n-aria="introGroup">
+          <label class="effect-choice"><input type="radio" name="introEffect" value="classic"><span data-i18n="introClassic">原版</span><small data-i18n="introClassicHint">脉冲 · 头像</small></label>
+          <label class="effect-choice"><input type="radio" name="introEffect" value="seeklight" checked><span data-i18n="introSeek">寻光</span><small data-i18n="introSeekHint">星点 · 锁定</small></label>
+          <label class="effect-choice"><input type="radio" name="introEffect" value="ripple"><span data-i18n="introRipple">涟漪</span><small data-i18n="introRippleHint">水环 · 头像</small></label>
+          <label class="effect-choice"><input type="radio" name="introEffect" value="veil"><span data-i18n="introVeil">雾散</span><small data-i18n="introVeilHint">薄雾 · 升起</small></label>
+        </div>
+        <p class="settings-section" data-i18n="revealGroup">后半段出现</p>
+        <div class="effect-choices effect-row" role="radiogroup" aria-label="后半段出现" data-i18n-aria="revealGroup">
+          <label class="effect-choice"><input type="radio" name="revealEffect" value="classic"><span data-i18n="revealClassic">原版</span><small data-i18n="revealClassicHint">碎片 · 线稿</small></label>
+          <label class="effect-choice"><input type="radio" name="revealEffect" value="seeklight" checked><span data-i18n="revealSeek">寻光</span><small data-i18n="revealSeekHint">星座 · 显影</small></label>
+          <label class="effect-choice"><input type="radio" name="revealEffect" value="ripple"><span data-i18n="revealRipple">涟漪</span><small data-i18n="revealRippleHint">圆环 · 显影</small></label>
+          <label class="effect-choice"><input type="radio" name="revealEffect" value="veil"><span data-i18n="revealVeil">雾散</span><small data-i18n="revealVeilHint">薄雾 · 升起</small></label>
         </div>
         <p class="settings-section" data-i18n="accentGroup">画面色彩</p>
         <div class="effect-choices accent-choices" role="radiogroup" aria-label="画面色彩" data-i18n-aria="accentGroup">
