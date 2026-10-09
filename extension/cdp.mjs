@@ -1,7 +1,9 @@
 export function pageTarget(target){
   try{
-    const url=new URL(target.url),route=url.searchParams.get('initialRoute')||'/';
-    return target.type==='page'&&url.protocol==='app:'&&url.hostname==='-'&&url.pathname==='/index.html'&&!/avatar|quick.chat|detached|mini|popover|notification/i.test(route);
+    const url=new URL(target.url);
+    const route=decodeURIComponent(url.searchParams.get('initialRoute')||'/');
+    if(target.type!=='page'||url.protocol!=='app:'||url.hostname!=='-'||url.pathname!=='/index.html')return false;
+    return route==='/'||route==='';
   }catch{return false;}
 }
 export function localSocket(value,port){

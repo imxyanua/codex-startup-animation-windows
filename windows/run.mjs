@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 import {buildInjection} from '../extension/payload.mjs';
 import {connect,pageTarget,localSocket} from '../extension/cdp.mjs';
-import {activateCodex,findCodexInstall,launchOfficial,mainProcessCommandLines} from './codex-install.mjs';
+import {activateCodex,findCodexInstall,focusCodexWindow,launchOfficial,mainProcessCommandLines} from './codex-install.mjs';
 import {assertLoopbackListener,assertSafeDebugArgs,commandLineHasDebugPort,debuggingArgs,executableBelongsToInstall,freePort,parseListeningAddresses,recoveryPlan} from './security.mjs';
 
 const exec=promisify(rawExec);
@@ -46,12 +46,16 @@ async function inject(port,source){
   const target=targets.find(pageTarget);if(!target)throw new Error('尚未找到主窗口');
   const client=await connect(localSocket(target.webSocketDebuggerUrl,port));
   try{
+    await client.call('Page.bringToFront').catch(()=>{});
     const result=await client.call('Runtime.evaluate',{expression:source,returnByValue:true,awaitPromise:true});
     if(result.exceptionDetails||result.result?.value?.installed!==true)throw new Error('外观脚本未能加载');
     for(let attempt=0;attempt<50;attempt++){
       const answer=await client.call('Runtime.evaluate',{expression:'globalThis.__aemeathExtension?.status()',returnByValue:true});
       const state=answer.result?.value;
-      if(state?.ready)return state;
+      if(state?.ready){
+        await client.call('Page.bringToFront').catch(()=>{});
+        return state;
+      }
       if(state?.phase==='failed'||state?.phase==='timeout')throw new Error('动画素材加载失败，覆盖层已移除');
       await delay(100);
     }
@@ -98,19 +102,25 @@ export async function main(argv=process.argv){
     await startWithDebugging(install,port);
     launchedWithDebugging=true;
     const deadline=Date.now()+45000;let lastError='等待 Codex 页面';
-    while(Date.now()<deadline){
-      try{
-        await verifyListener(port,install.root);
-        const state=await inject(port,source);
-        await delay(400);
-        const still=await mainProcessCommandLines(install.executable);
-        if(!still.length)throw new Error('Codex 在动画注入后退出');
-        console.log('已在 Codex 窗口开始播放。辅助进程现在退出；Ctrl+Alt+B 打开图片设置。');
-        return {injected:true,port,install,state};
-      }catch(error){lastError=error.message;}
-      await delay(150);
+    const focusTick=setInterval(()=>focusCodexWindow(install).catch(()=>{}),800);
+    try{
+      while(Date.now()<deadline){
+        try{
+          await verifyListener(port,install.root);
+          const state=await inject(port,source);
+          await delay(400);
+          const still=await mainProcessCommandLines(install.executable);
+          if(!still.length)throw new Error('Codex 在动画注入后退出');
+          await focusCodexWindow(install).catch(()=>{});
+          console.log('已在 Codex 窗口开始播放。辅助进程现在退出；Ctrl+Alt+B 打开图片设置。');
+          return {injected:true,port,install,state};
+        }catch(error){lastError=error.message;}
+        await delay(150);
+      }
+      throw new Error(lastError);
+    }finally{
+      clearInterval(focusTick);
     }
-    throw new Error(lastError);
   }catch(error){
     const plan=await fallbackLaunch(install,error,{launchedWithDebugging});
     console.error(plan.message);

@@ -8,6 +8,10 @@ export function installRenderer(payload, mount) {
   const before=new Map(['--aemeath-wallpaper','--aemeath-wash'].map(key=>[key,[root.style.getPropertyValue(key),root.style.getPropertyPriority(key)]]));
   const originalAttribute=root.getAttribute('data-aemeath-skin');
   const style=document.createElement('style');style.id='aemeath-extension-style';style.textContent=payload.skin;
+  const asWallpaper=value=>{
+    const image=typeof value==='string'?value.trim():'';
+    return /^data:image\/(?:png|jpe?g|webp);base64,/i.test(image)?image:'';
+  };
   function removeOverlay(){
     clearTimeout(watchdog);observer?.disconnect();observer=null;
     frame?.remove();frame=null;
@@ -22,16 +26,16 @@ export function installRenderer(payload, mount) {
     delete window.__aemeathExtension;
   }
   function background(data){
-    if(typeof data.image!=='string'||!/^data:image\/(png|jpeg|webp);base64,/.test(data.image))return;
+    const image=asWallpaper(data.image);
+    if(!image)return;
     if(!style.isConnected)document.head.appendChild(style);
     const strength=Number.isFinite(data.strength)?Math.max(0,Math.min(75,data.strength)):42;
     // Large data URLs exceed CSS custom-property token limits in Chromium.
     // A short local Blob URL also avoids copying megabytes into each style value.
-    if(strength>0&&data.image!==lastImage){
-      const comma=data.image.indexOf(','),mime=data.image.slice(5,data.image.indexOf(';'));
-      const binary=atob(data.image.slice(comma+1)),bytes=new Uint8Array(binary.length);
-      for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-      const previous=wallpaperURL;wallpaperURL=URL.createObjectURL(new Blob([bytes],{type:mime}));lastImage=data.image;
+    if(strength>0&&image!==lastImage){
+      const comma=image.indexOf(','),mime=image.slice(5,image.indexOf(';'))||'image/jpeg';
+      const bytes=Uint8Array.from(atob(image.slice(comma+1)),c=>c.charCodeAt(0));
+      const previous=wallpaperURL;wallpaperURL=URL.createObjectURL(new Blob([bytes],{type:mime}));lastImage=image;
       root.style.setProperty('--aemeath-wallpaper',`url(${JSON.stringify(wallpaperURL)})`);
       if(previous)URL.revokeObjectURL(previous);
     }
@@ -57,6 +61,7 @@ export function installRenderer(payload, mount) {
         // preserves frame identity without weakening postMessage source checks.
         win.AEMEATH_SEND=data=>message({source:win,data});
         mount(win);current.focus();
+        background({image:payload.assets?.artwork,strength:42});
       }catch(error){phase='failed';console.error('Aemeath extension:',error.message);removeOverlay();}
     },{once:true});
     current.src='about:blank';document.body.appendChild(current);
@@ -81,4 +86,9 @@ export function installRenderer(payload, mount) {
   if(document.body)show();
   else{observer=new MutationObserver(()=>{if(document.body){observer.disconnect();observer=null;show();}});observer.observe(document,{childList:true,subtree:true});}
   return {installed:true};
+}
+
+export function wallpaperDataUrl(value){
+  const image=typeof value==='string'?value.trim():'';
+  return /^data:image\/(?:png|jpe?g|webp);base64,/i.test(image)?image:'';
 }

@@ -126,6 +126,12 @@ export async function findCodexInstall(){
   return verifyInstallIdentity(unpackaged);
 }
 
+export async function focusCodexWindow(install){
+  await command(powershell,['-NoProfile','-ExecutionPolicy','Bypass','-Command',
+    `$p=Get-Process | Where-Object { $_.Path -eq ${JSON.stringify(install.executable)} -and $_.MainWindowHandle -ne 0 } | Select-Object -First 1; if($p){ (New-Object -ComObject WScript.Shell).AppActivate($p.Id) | Out-Null }`
+  ],{timeout:5000});
+}
+
 export async function activateCodex(install){
   if(install.aumid){
     await command(powershell,['-NoProfile','-ExecutionPolicy','Bypass','-Command',`Start-Process "shell:AppsFolder\\${install.aumid}"`]);

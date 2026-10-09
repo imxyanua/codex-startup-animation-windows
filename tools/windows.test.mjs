@@ -18,6 +18,7 @@ import {previewArgs} from '../windows/preview.mjs';
 
 const require=createRequire(import.meta.url);
 const {vectorize}=require('../image-settings.js');
+const {normalize:normalizeLocale,t:translate}=require('../locale.js');
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
 
 test('调试参数只绑定 127.0.0.1',()=>{
@@ -140,6 +141,26 @@ test('预览页筛选只接受本机动画页',()=>{
   assert.ok(args.some(value=>value.startsWith('--app=http://127.0.0.1:8765/')));
 });
 
+test('菜单支持中文和越南语',()=>{
+  assert.equal(normalizeLocale('vi'),'vi');
+  assert.equal(normalizeLocale('zh'),'zh');
+  assert.equal(normalizeLocale('en'),'zh');
+  assert.equal(translate('zh','settingsTitle'),'换成你喜欢的画面');
+  assert.equal(translate('vi','settingsTitle'),'Đổi thành hình bạn thích');
+  assert.equal(translate('vi','localeGroup'),'Ngôn ngữ giao diện');
+  assert.equal(translate('vi','savePreview'),'Lưu và xem lại');
+});
+
+test('注入脚本包含语言选项和越南语词条',async()=>{
+  const {buildInjection}=await import('../extension/payload.mjs');
+  const source=await buildInjection(root);
+  assert.match(source,/name=\\"locale\\"/);
+  assert.match(source,/value=\\"vi\\"/);
+  assert.match(source,/Tiếng Việt/);
+  assert.match(source,/Đổi thành hình bạn thích/);
+  assert.match(source,/aemeathI18n/);
+});
+
 test('自定义背景轮廓可从像素生成',()=>{
   const width=48,height=32,data=new Uint8ClampedArray(width*height*4);
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
@@ -150,6 +171,18 @@ test('自定义背景轮廓可从像素生成',()=>{
   assert.ok(paths.length>0);
   assert.ok(paths[0].length>=8);
   assert.equal(paths[0][0].length,2);
+});
+
+test('Ctrl+Alt+B 菜单可切换 tiếng Việt',async()=>{
+  const {runSmoke}=await import('../windows/smoke.mjs');
+  const {findEdge}=await import('../windows/preview.mjs');
+  const result=await runSmoke({root,edge:findEdge(),duration:4000,lang:'vi',settings:true});
+  assert.equal(result.locale,'vi');
+  assert.equal(result.htmlLang,'vi');
+  assert.equal(result.settingsOpen,true);
+  assert.equal(result.settingsTitle,'Đổi thành hình bạn thích');
+  assert.equal(result.saveLabel,'Lưu và xem lại');
+  assert.equal(result.localeLabel,'Ngôn ngữ giao diện');
 });
 
 test('独立动画可用 Esc 跳过',async()=>{

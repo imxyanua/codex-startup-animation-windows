@@ -15,10 +15,16 @@
   const allowedEffect = {classic:1,seeklight:1};
   const normalizeEffect = value => allowedEffect[value] ? value : 'seeklight';
   let effect = normalizeEffect(params.get('effect'));
+  const i18n = window.aemeathI18n || {normalize: value => value === 'vi' ? 'vi' : 'zh', t: (_, key) => key};
+  const normalizeLocale = value => i18n.normalize(value);
+  let locale = normalizeLocale(params.get('lang') || params.get('locale'));
+  const t = key => i18n.t(locale, key);
+  let skippedFinish = false;
   const assets=window.AEMEATH_ASSETS||{artwork:'assets/artwork.jpg',avatar:'assets/avatar.jpg'};
   if(embedded)document.body.classList.add('embedded');
   const root = $('.window'), art = $('.artwork'), scene = $('.scene');
   root.dataset.effect = effect;
+  root.dataset.locale = locale;
   const hud = $('.hud'), intro = $('.intro'), sweep = $('.light-sweep');
   const slider = $('#timeline'), pause = $('#pause'), subtitle = $('.subtitle');
   slider.max=String(duration/1000);
@@ -399,13 +405,14 @@
       root.dataset.stage=s>=11?'shutter':s<1.15?'pulse':s<4.18?'identity':s<4.74?'dispersing':s<5.08?'scattered':s<7.18?'drawing':s<7.43?'colorize':'portrait';
     }
   }
-  function updateButton() { pause.textContent=playing?'暂停':'继续'; root.dataset.playing=String(playing); }
+  function updateButton() { pause.textContent=playing?t('pause'):t('resume'); root.dataset.playing=String(playing); }
   function stop() { playing=false; cancelAnimationFrame(frame); frame=0; updateButton(); }
   function finish(skipped=false) {
+    skippedFinish=skipped;
     stop(); elapsed=duration; render(elapsed); completed=true;
     root.classList.add('finished'); root.dataset.completed='true';
-    pause.textContent='已结束'; pause.disabled=true;
-    $('.end-description').textContent=mode==='launch'?'正在显示 Codex…':skipped?'已跳过开场动画':'开场预览结束';
+    pause.textContent=t('finished'); pause.disabled=true;
+    $('.end-description').textContent=mode==='launch'?t('showingCodex'):skipped?t('skipped'):t('previewEnded');
     send('complete');
   }
   function tick(now) {
@@ -452,14 +459,14 @@
   window.launcherUI={
     openSettings,
     beginLaunch(){mode='launch';document.body.classList.add('launch-mode');replay();},
-    error(message){stop();scene.style.opacity='0';root.classList.add('finished');$('.end-description').textContent=message;$('.eyebrow').textContent='LAUNCH UNAVAILABLE';$('.end-screen h1').textContent='暂时无法打开 Codex';},
-    waiting(){ $('.end-description').textContent='正在等待 Codex 打开…'; }
+    error(message){stop();scene.style.opacity='0';root.classList.add('finished');$('.end-description').textContent=message;$('.eyebrow').textContent=t('launchUnavailable');$('.end-screen h1').textContent=t('cannotOpen');},
+    waiting(){ $('.end-description').textContent=t('waitingCodex'); }
   };
   if(native){
     document.body.classList.add('native');
   }
   function ready(){if(loaded)return;loaded=true;render(0);send('ready');if(window.AEMEATH_OPEN_SETTINGS||new URLSearchParams(location.search).has('settings'))openSettings();else play();}
-  function failed(){stop();$('#asset-error').hidden=false;send('assetError');}
+  function failed(){stop();applyLocale(locale);$('#asset-error').hidden=false;send('assetError');}
   let savedImages={},pendingImages={},busy=false;
   const settings=$('#settings-dialog'),status=$('#settings-status');
   const textFields=[
@@ -468,6 +475,27 @@
     {key:'artworkSubtitle',input:'#artwork-subtitle',target:'#subtitle',fallback:'幽灵来到…你身边～',limit:60}
   ];
   const textValue=(images,field)=>typeof images[field.key]==='string'?images[field.key].slice(0,field.limit):field.fallback;
+  function setStatus(key,suffix=''){
+    status.dataset.key=key||'';
+    status.dataset.suffix=suffix;
+    status.textContent=(key?t(key):'')+suffix;
+  }
+  function applyLocale(next){
+    locale=normalizeLocale(next);
+    if(window.imageSettings)window.imageSettings.locale=locale;
+    document.documentElement.lang=locale==='vi'?'vi':'zh-CN';
+    document.title=t('docTitle');
+    root.dataset.locale=locale;
+    document.querySelectorAll('[data-i18n]').forEach(node=>{node.textContent=t(node.getAttribute('data-i18n'));});
+    document.querySelectorAll('[data-i18n-aria]').forEach(node=>{node.setAttribute('aria-label',t(node.getAttribute('data-i18n-aria')));});
+    document.querySelectorAll('[data-i18n-title]').forEach(node=>{node.setAttribute('title',t(node.getAttribute('data-i18n-title')));});
+    document.querySelectorAll('[data-i18n-alt]').forEach(node=>{node.setAttribute('alt',t(node.getAttribute('data-i18n-alt')));});
+    if(status.dataset.key)status.textContent=t(status.dataset.key)+(status.dataset.suffix||'');
+    if(completed){
+      pause.textContent=t('finished');
+      $('.end-description').textContent=mode==='launch'?t('showingCodex'):skippedFinish?t('skipped'):t('previewEnded');
+    }else if(loaded) updateButton();
+  }
   function thumbnails(){
     $('#avatar-preview').src=pendingImages.avatar||assets.avatar;
     $('#artwork-preview').src=pendingImages.artwork||assets.artwork;
@@ -477,6 +505,8 @@
     $('#playback-duration-value').textContent=$('#playback-duration').value+'s';
     const chosen=normalizeEffect(pendingImages.effect);
     document.querySelectorAll('input[name=effect]').forEach(node=>{node.checked=node.value===chosen;});
+    const chosenLocale=normalizeLocale(pendingImages.locale);
+    document.querySelectorAll('input[name=locale]').forEach(node=>{node.checked=node.value===chosenLocale;});
     for(const field of textFields)$(field.input).value=textValue(pendingImages,field);
   }
   function setEffect(name){
@@ -488,8 +518,12 @@
   }
   function openSettings(){
     if(mode==='launch'||settings.open)return;
-    hiddenPause=false;stop();pendingImages={...savedImages};thumbnails();
-    status.textContent='图片与文字保存在本机。修改后点击「保存并预览」；关闭则放弃本次修改。';
+    hiddenPause=false;stop();pendingImages={...savedImages};
+    pendingImages.locale=normalizeLocale((params.has('lang')||params.has('locale'))?locale:pendingImages.locale);
+    thumbnails();
+    applyLocale(pendingImages.locale);
+    setStatus('openHint');
+    settings.dataset.opened='1';
     settings.returnValue='';settings.showModal();send('settings-open');
   }
   function setBusy(value){
@@ -502,10 +536,14 @@
     await Promise.all([art,$('.avatar')].map(img=>img.decode()));
     paths=preparePaths(images.contours||window.CONTOUR_PATHS||[]);fragments=prepareFragments(paths);prepareConstellation(fragments);lastTrace=-1;
     if(!params.has('effect'))setEffect(images.effect);
-    if(!paths.length)throw new Error('图片轮廓数据缺失');
+    applyLocale((params.has('lang')||params.has('locale'))?locale:images.locale);
+    if(!paths.length)throw new Error(t('missingContours'));
     for(const field of textFields)$(field.target).textContent=textValue(images,field);
     $('.boot-title').classList.toggle('long-title',Array.from(textValue(images,textFields[0])).length>6);
-    send('background',{image:art.src,strength:images.wallpaperStrength??42});
+    const wallpaperCanvas=document.createElement('canvas');
+    wallpaperCanvas.width=1536;wallpaperCanvas.height=1024;
+    wallpaperCanvas.getContext('2d').drawImage(art,0,0,1536,1024);
+    send('background',{image:wallpaperCanvas.toDataURL('image/jpeg',0.72),strength:images.wallpaperStrength??42});
     if(!params.has('duration'))playbackDuration=clampDuration(images.durationMs??authoredDuration);
   }
   for(const field of textFields)$(field.input).addEventListener('input',event=>{
@@ -522,31 +560,37 @@
   document.querySelectorAll('input[name=effect]').forEach(node=>node.addEventListener('change',()=>{
     pendingImages.effect=normalizeEffect(node.value);
   }));
+  document.querySelectorAll('input[name=locale]').forEach(node=>node.addEventListener('change',()=>{
+    pendingImages.locale=normalizeLocale(node.value);
+    applyLocale(pendingImages.locale);
+  }));
   $('#image-settings').addEventListener('click',openSettings);
   if(window.AEMEATH_EXTERNAL){$('#restore-appearance').hidden=false;$('#restore-appearance').addEventListener('click',()=>send('restore'));}
   settings.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
   settings.addEventListener('close',()=>{
-    if(!loaded)return;
+    if(!loaded||settings.dataset.opened!=='1')return;
+    delete settings.dataset.opened;
     if(settings.returnValue==='preview'){send('settings-close');replay();}
-    else finish(true);
+    else {applyLocale(savedImages.locale);finish(true);}
   });
   for(const kind of ['avatar','artwork'])$('#'+kind+'-file').addEventListener('change',async event=>{
     const file=event.target.files[0];if(!file)return;
-    setBusy(true);status.textContent=kind==='artwork'?'正在为新背景生成线稿…':'正在准备头像…';
+    setBusy(true);setStatus(kind==='artwork'?'preparingArtwork':'preparingAvatar');
     // Let the progress text paint before the one-time contour computation.
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     try{
       pendingImages={...pendingImages,...await window.imageSettings.importImage(file,kind)};thumbnails();
-      status.textContent='图片已准备好，点击「保存并预览」应用。';
-    }catch(error){status.textContent=error.message;}
+      setStatus('imageReady');
+    }catch(error){setStatus('',error.message);}
     finally{setBusy(false);event.target.value='';}
   });
-  $('#reset-images').addEventListener('click',()=>{pendingImages={effect:'seeklight'};thumbnails();status.textContent='已选用默认图片、文字、寻光效果和背景显现程度，点击「保存并预览」应用。';});
+  $('#reset-images').addEventListener('click',()=>{pendingImages={effect:'seeklight',locale:normalizeLocale(pendingImages.locale)};thumbnails();setStatus('resetHint');});
   $('#preview-images').addEventListener('click',async()=>{
-    setBusy(true);status.textContent='正在保存…';
+    setBusy(true);setStatus('saving');
     try{
+      pendingImages.locale=normalizeLocale(pendingImages.locale);
       await applyImages(pendingImages);await window.imageSettings.save(pendingImages);savedImages={...pendingImages};settings.close('preview');
-    }catch(error){await applyImages(savedImages);status.textContent='保存失败，原设置已保留：'+error.message;}
+    }catch(error){await applyImages(savedImages);setStatus('saveFail',error.message);}
     finally{setBusy(false);}
   });
   window.imageSettings.load().catch(()=>({})).then(async images=>{

@@ -33,12 +33,14 @@ async function waitForListener(port){
   throw new Error(last);
 }
 
-export async function runSmoke({root,url,edge,duration=12000,skipAfter=0}={}){
+export async function runSmoke({root,url,edge,duration=12000,skipAfter=0,lang,settings=false}={}){
   const server=url?null:await serveLocal(root);
   const page=new URL(url||server.url);
   page.searchParams.set('native','1');
   page.searchParams.set('smoke','1');
   if(duration!==12000)page.searchParams.set('duration',String(duration));
+  if(lang)page.searchParams.set('lang',String(lang));
+  if(settings)page.searchParams.set('settings','1');
   const port=await freePort();
   const profile=await mkdtemp(join(tmpdir(),'aemeath-smoke-'));
   const browser=spawn(edge||findEdge(),[
@@ -71,10 +73,15 @@ export async function runSmoke({root,url,edge,duration=12000,skipAfter=0}={}){
           skipped=true;
           await client.call('Runtime.evaluate',{expression:'window.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))',returnByValue:true});
         }
-        const result=await client.call('Runtime.evaluate',{expression:`(()=>{const root=document.querySelector('.window');return root?{elapsed:root.dataset.elapsed,playing:root.dataset.playing,completed:root.dataset.completed,stage:root.dataset.stage,imageWidth:document.querySelector('.artwork')?.naturalWidth,avatarWidth:document.querySelector('.avatar')?.naturalWidth,trace:document.querySelector('.line-art')?.dataset}:null})()`,returnByValue:true});
+        const result=await client.call('Runtime.evaluate',{expression:`(()=>{const root=document.querySelector('.window');const dialog=document.querySelector('#settings-dialog');return root?{elapsed:root.dataset.elapsed,playing:root.dataset.playing,completed:root.dataset.completed,stage:root.dataset.stage,locale:root.dataset.locale,settingsOpen:!!dialog?.open,settingsTitle:document.querySelector('#settings-title')?.textContent,saveLabel:document.querySelector('#preview-images')?.textContent,localeLabel:document.querySelector('.locale-choices')?.getAttribute('aria-label'),htmlLang:document.documentElement.lang,imageWidth:document.querySelector('.artwork')?.naturalWidth,avatarWidth:document.querySelector('.avatar')?.naturalWidth,trace:document.querySelector('.line-art')?.dataset}:null})()`,returnByValue:true});
         const value=result.result?.value;
-        if(value?.completed==='true')return value;
-        lastError=value?'动画尚未结束':'页面尚未就绪';
+        if(settings){
+          if(value?.settingsOpen&&value.settingsTitle)return value;
+          lastError=value?'设置对话框尚未打开':'页面尚未就绪';
+        }else{
+          if(value?.completed==='true')return value;
+          lastError=value?'动画尚未结束':'页面尚未就绪';
+        }
       }catch(error){lastError=error.message;}
       finally{client?.close();}
       await delay(200);

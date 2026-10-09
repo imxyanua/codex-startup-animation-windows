@@ -39,6 +39,10 @@
     return paths.sort((a,b)=>b.length-a.length).slice(0,1200);
   }
   if(typeof module!=='undefined') {module.exports={vectorize};return;}
+  function text(code,fallback){
+    const i18n=scope.aemeathI18n;
+    return i18n?i18n.t(scope.imageSettings&&scope.imageSettings.locale,code):fallback;
+  }
   async function database(action,value){
     return new Promise((resolve,reject)=>{
       const open=indexedDB.open('aemeath-startup-images',1);
@@ -48,13 +52,13 @@
         const db=open.result,tx=db.transaction('settings',action==='read'?'readonly':'readwrite'),store=tx.objectStore('settings');
         const request=action==='read'?store.get('images'):store.put(value,'images');
         tx.oncomplete=()=>{db.close();resolve(action==='read'?request.result||{}:value);};
-        tx.onerror=tx.onabort=()=>{db.close();reject(tx.error||new Error('保存失败'));};
+        tx.onerror=tx.onabort=()=>{db.close();reject(tx.error||new Error(text('saveFailed','保存失败')));};
       };
     });
   }
   async function importImage(file,kind){
-    if(file.size>30*1024*1024)throw new Error('请选择小于 30 MB 的图片。');
-    if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('请选择 PNG、JPEG 或 WebP 图片。');
+    if(file.size>30*1024*1024)throw new Error(text('fileTooLarge','请选择小于 30 MB 的图片。'));
+    if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error(text('fileType','请选择 PNG、JPEG 或 WebP 图片。'));
     const url=URL.createObjectURL(file),img=new Image();
     try{
       img.src=url;await img.decode();
@@ -68,10 +72,10 @@
       const small=document.createElement('canvas');small.width=768;small.height=512;
       const smallCtx=small.getContext('2d',{willReadFrequently:true});smallCtx.drawImage(canvas,0,0,768,512);
       const contours=vectorize(smallCtx.getImageData(0,0,768,512).data,768,512);
-      if(!contours.length)throw new Error('图片轮廓太少，请选择边缘更清晰的背景。');
+      if(!contours.length)throw new Error(text('fewContours','图片轮廓太少，请选择边缘更清晰的背景。'));
       return {artwork:image,contours};
-    }catch(error){throw new Error(error.message||'图片无法读取，请换一张图片。');}
+    }catch(error){throw new Error(error.message||text('unreadable','图片无法读取，请换一张图片。'));}
     finally{URL.revokeObjectURL(url);}
   }
-  scope.imageSettings={load:()=>database('read'),save:images=>database('write',images),importImage};
+  scope.imageSettings={load:()=>database('read'),save:images=>database('write',images),importImage,locale:'zh'};
 })(typeof window==='undefined'?{}:window);
