@@ -175,9 +175,11 @@ test('注入脚本包含语言选项和越南语词条',async()=>{
   assert.match(source,/name=\\"accent\\"/);
   assert.match(source,/value=\\"frost\\"/);
   assert.match(source,/aemeathAccent/);
+  assert.match(source,/name=\\"introEffect\\"/);
+  assert.match(source,/name=\\"revealEffect\\"/);
   assert.match(source,/value=\\"ripple\\"/);
-  assert.match(source,/value=\\"iris\\"/);
   assert.match(source,/value=\\"veil\\"/);
+  assert.doesNotMatch(source,/value=\\"iris\\"/);
 });
 
 test('导入图片认 MIME 和 Windows 空 type/.jpg',()=>{
