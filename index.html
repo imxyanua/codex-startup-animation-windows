@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="assets/contours.js" defer></script>
   <script src="locale.js" defer></script>
+  <script src="accent.js" defer></script>
   <script src="image-settings.js" defer></script>
   <script src="animation.js" defer></script>
 </head>
@@ -80,6 +81,14 @@
           <label class="effect-choice"><input type="radio" name="effect" value="classic"><span data-i18n="effectClassic">原版序列</span><small data-i18n="effectClassicHint">脉冲 · 碎片 · 线稿</small></label>
           <label class="effect-choice"><input type="radio" name="effect" value="seeklight" checked><span data-i18n="effectSeek">寻光</span><small data-i18n="effectSeekHint">星点 · 连线 · 显影</small></label>
         </div>
+        <p class="settings-section" data-i18n="accentGroup">画面色彩</p>
+        <div class="effect-choices accent-choices" role="radiogroup" aria-label="画面色彩" data-i18n-aria="accentGroup">
+          <label class="effect-choice"><input type="radio" name="accent" value="rose" checked><i class="accent-swatch" style="background:#e9a8bf"></i><span data-i18n="accentRose">当前粉</span><small data-i18n="accentRoseHint">粉紫 · 现用</small></label>
+          <label class="effect-choice"><input type="radio" name="accent" value="frost"><i class="accent-swatch" style="background:#b7d8ea"></i><span data-i18n="accentFrost">冷白</span><small data-i18n="accentFrostHint">青白 · 寻光</small></label>
+          <label class="effect-choice"><input type="radio" name="accent" value="amber"><i class="accent-swatch" style="background:#e0b15a"></i><span data-i18n="accentAmber">琥珀</span><small data-i18n="accentAmberHint">暖金 · 夜灯</small></label>
+          <label class="effect-choice"><input type="radio" name="accent" value="custom"><i class="accent-swatch accent-swatch-custom"></i><span data-i18n="accentCustom">自定义</span><small data-i18n="accentCustomHint">自选颜色</small></label>
+        </div>
+        <label class="accent-picker" for="accent-color"><span data-i18n="accentPicker">自定义颜色</span><input id="accent-color" type="color" value="#e9a8bf"></label>
         <div class="image-choices">
           <label class="image-choice"><img id="avatar-preview" src="assets/avatar.jpg" alt="当前头像" data-i18n-alt="avatarAlt"><span data-i18n="avatarLabel">前半段头像</span><small data-i18n="avatarHint">方形图片效果最好</small><span class="choose-label" data-i18n="avatarChoose">更换头像</span><input id="avatar-file" type="file" accept=".jpg,.jpeg,.jfif,.png,.webp,.gif,.bmp,.avif,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif" aria-label="更换头像" data-i18n-aria="avatarChoose"></label>
           <label class="image-choice"><img id="artwork-preview" src="assets/artwork.jpg" alt="当前背景" data-i18n-alt="artworkAlt"><span data-i18n="artworkLabel">后半段背景</span><small data-i18n="artworkHint">推荐 3:2 横图 · 自动生成线稿</small><span class="choose-label" data-i18n="artworkChoose">更换背景</span><input id="artwork-file" type="file" accept=".jpg,.jpeg,.jfif,.png,.webp,.gif,.bmp,.avif,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif" aria-label="更换背景" data-i18n-aria="artworkChoose"></label>
