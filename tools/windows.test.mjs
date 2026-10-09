@@ -17,7 +17,7 @@ import {previewPageTarget} from '../windows/smoke.mjs';
 import {previewArgs} from '../windows/preview.mjs';
 
 const require=createRequire(import.meta.url);
-const {vectorize}=require('../image-settings.js');
+const {vectorize,imageKind}=require('../image-settings.js');
 const {normalize:normalizeLocale,t:translate}=require('../locale.js');
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -159,6 +159,18 @@ test('注入脚本包含语言选项和越南语词条',async()=>{
   assert.match(source,/Tiếng Việt/);
   assert.match(source,/Đổi thành hình bạn thích/);
   assert.match(source,/aemeathI18n/);
+});
+
+test('导入图片认 MIME 和 Windows 空 type/.jpg',()=>{
+  assert.equal(imageKind({type:'image/jpeg',name:'a.jpg'}),'jpeg');
+  assert.equal(imageKind({type:'image/jpg',name:'a.jpg'}),'jpeg');
+  assert.equal(imageKind({type:'',name:'nền.JPG'}),'jpeg');
+  assert.equal(imageKind({type:'',name:'cat.jfif'}),'jpeg');
+  assert.equal(imageKind({type:'image/png',name:'x.bin'}),'png');
+  assert.equal(imageKind({type:'',name:'bg.webp'}),'webp');
+  assert.equal(imageKind({type:'',name:'shot.bmp'}),'bmp');
+  assert.equal(imageKind({type:'',name:'note.txt'}),'');
+  assert.equal(imageKind({type:'application/pdf',name:'a.pdf'}),'');
 });
 
 test('自定义背景轮廓可从像素生成',()=>{

@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 import {buildInjection} from '../extension/payload.mjs';
 import {connect,pageTarget,localSocket} from '../extension/cdp.mjs';
-import {activateCodex,findCodexInstall,focusCodexWindow,launchOfficial,mainProcessCommandLines} from './codex-install.mjs';
+import {findCodexInstall,focusCodexWindow,launchOfficial,mainProcessCommandLines,quitCodex} from './codex-install.mjs';
 import {assertLoopbackListener,assertSafeDebugArgs,commandLineHasDebugPort,debuggingArgs,executableBelongsToInstall,freePort,parseListeningAddresses,recoveryPlan} from './security.mjs';
 
 const exec=promisify(rawExec);
@@ -91,9 +91,9 @@ export async function main(argv=process.argv){
     return install;
   }
   if(install.running.length){
-    await activateCodex(install);
-    console.log('Codex 已在运行，已切换到现有窗口。要播放启动动画，请先完全退出官方应用后再从本入口打开。');
-    return {activated:true,install};
+    console.log('Codex 正在运行，将先完全退出以便播放启动动画…');
+    await quitCodex(install);
+    install.running=[];
   }
   const source=await buildInjection(root);
   const port=await freePort();

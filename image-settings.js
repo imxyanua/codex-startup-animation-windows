@@ -38,6 +38,17 @@
     for(let i=0;i<count;i++)if(edge[i]&&!visited[i])walk(i);
     return paths.sort((a,b)=>b.length-a.length).slice(0,1200);
   }
+  function imageKind(file){
+    const type=String(file&&file.type||'').toLowerCase();
+    const name=String(file&&file.name||'').toLowerCase();
+    if(type==='image/jpeg'||type==='image/jpg'||type==='image/pjpeg'||/\.(jpe?g|jfif)$/.test(name))return 'jpeg';
+    if(type==='image/png'||/\.png$/.test(name))return 'png';
+    if(type==='image/webp'||/\.webp$/.test(name))return 'webp';
+    if(type==='image/gif'||/\.gif$/.test(name))return 'gif';
+    if(type==='image/bmp'||type==='image/x-ms-bmp'||/\.bmp$/.test(name))return 'bmp';
+    if(type==='image/avif'||/\.avif$/.test(name))return 'avif';
+    return '';
+  }
   function traceImage(img){
     try{
       if(!img||!img.naturalWidth)return [];
@@ -52,7 +63,7 @@
       return [];
     }
   }
-  if(typeof module!=='undefined') {module.exports={vectorize,traceImage};return;}
+  if(typeof module!=='undefined') {module.exports={vectorize,traceImage,imageKind};return;}
   function text(code,fallback){
     const i18n=scope.aemeathI18n;
     return i18n?i18n.t(scope.imageSettings&&scope.imageSettings.locale,code):fallback;
@@ -72,7 +83,7 @@
   }
   async function importImage(file,kind){
     if(file.size>30*1024*1024)throw new Error(text('fileTooLarge','请选择小于 30 MB 的图片。'));
-    if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error(text('fileType','请选择 PNG、JPEG 或 WebP 图片。'));
+    if(!imageKind(file))throw new Error(text('fileType','请选择 PNG、JPEG、WebP、GIF、BMP 或 AVIF 图片。'));
     const url=URL.createObjectURL(file),img=new Image();
     try{
       img.src=url;await img.decode();
@@ -81,11 +92,9 @@
       const scale=Math.max(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight);
       const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
       ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
-      const image=canvas.toDataURL('image/png');
+      const image=canvas.toDataURL('image/jpeg',kind==='avatar'?0.92:0.85);
       if(kind==='avatar')return {avatar:image};
-      const contours=traceImage(canvas);
-      if(!contours.length)throw new Error(text('fewContours','图片轮廓太少，请选择边缘更清晰的背景。'));
-      return {artwork:image,contours};
+      return {artwork:image,contours:undefined};
     }catch(error){throw new Error(error.message||text('unreadable','图片无法读取，请换一张图片。'));}
     finally{URL.revokeObjectURL(url);}
   }

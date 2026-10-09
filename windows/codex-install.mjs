@@ -1,5 +1,6 @@
 import {execFile as rawExec} from 'node:child_process';
 import {promisify} from 'node:util';
+import {setTimeout as delay} from 'node:timers/promises';
 import {access,readdir} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import {join} from 'node:path';
@@ -124,6 +125,23 @@ export async function findCodexInstall(){
   unpackaged.node=await findBundledNode(unpackaged.root);
   unpackaged.running=await runningCodex();
   return verifyInstallIdentity(unpackaged);
+}
+
+export async function quitCodex(install){
+  const pids=[...new Set((install.running||[]).map(item=>Number(item.pid)).filter(pid=>Number.isInteger(pid)&&pid>0))];
+  for(const pid of pids){
+    try{await command('taskkill',['/PID',String(pid),'/T','/F'],{timeout:10000});}catch{}
+  }
+  try{await command('taskkill',['/IM','ChatGPT.exe','/T','/F'],{timeout:10000});}catch{}
+  const deadline=Date.now()+12000;
+  while(Date.now()<deadline){
+    const still=await mainProcessCommandLines(install.executable);
+    if(!still.length){
+      await delay(500);
+      return;
+    }
+    await delay(250);
+  }
 }
 
 export async function focusCodexWindow(install){

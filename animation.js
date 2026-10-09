@@ -581,7 +581,9 @@
     // Let the progress text paint before the one-time contour computation.
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     try{
-      pendingImages={...pendingImages,...await window.imageSettings.importImage(file,kind)};thumbnails();
+      pendingImages={...pendingImages,...await window.imageSettings.importImage(file,kind)};
+      if(kind==='artwork')delete pendingImages.contours;
+      thumbnails();
       setStatus('imageReady');
     }catch(error){setStatus('',error.message);}
     finally{setBusy(false);event.target.value='';}
@@ -591,6 +593,7 @@
     setBusy(true);setStatus('saving');
     try{
       pendingImages.locale=normalizeLocale(pendingImages.locale);
+      delete pendingImages.contours;
       await applyImages(pendingImages);await window.imageSettings.save(pendingImages);savedImages={...pendingImages};settings.close('preview');
     }catch(error){await applyImages(savedImages);setStatus('saveFail',error.message);}
     finally{setBusy(false);}
