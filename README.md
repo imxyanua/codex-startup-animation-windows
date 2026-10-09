@@ -2,10 +2,6 @@
 
 [中文](#中文) · [Tiếng Việt](#tiếng-việt)
 
-Windows 专用的 Codex 开场动画启动器。macOS 原版见 [codex-startup-animation](https://github.com/imxyanua/codex-startup-animation)。
-
-Launcher Windows cho animation khởi động Codex. Bản macOS: [codex-startup-animation](https://github.com/imxyanua/codex-startup-animation).
-
 ---
 
 ## 中文
