@@ -49,6 +49,22 @@
     if(type==='image/avif'||/\.avif$/.test(name))return 'avif';
     return '';
   }
+  function isAnimatedImage(bytes){
+    const u8=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes||[]);
+    if(u8.length>=6&&u8[0]===0x47&&u8[1]===0x49&&u8[2]===0x46)return true;
+    if(u8.length>=21&&u8[0]===0x52&&u8[8]===0x57&&u8[12]===0x56&&u8[13]===0x50&&u8[14]===0x38&&u8[15]===0x58)return !!(u8[20]&2);
+    if(u8.length>=16&&u8[0]===0x89&&u8[1]===0x50&&u8[2]===0x4E&&u8[3]===0x47){
+      let i=8;
+      while(i+8<=u8.length){
+        const size=((u8[i]<<24)|(u8[i+1]<<16)|(u8[i+2]<<8)|u8[i+3])>>>0;
+        const tag=String.fromCharCode(u8[i+4],u8[i+5],u8[i+6],u8[i+7]);
+        if(tag==='acTL')return true;
+        if(tag==='IDAT'||tag==='IEND')return false;
+        i+=12+size;
+      }
+    }
+    return false;
+  }
   function traceImage(img){
     try{
       if(!img||!img.naturalWidth)return [];
@@ -63,7 +79,7 @@
       return [];
     }
   }
-  if(typeof module!=='undefined') {module.exports={vectorize,traceImage,imageKind};return;}
+  if(typeof module!=='undefined') {module.exports={vectorize,traceImage,imageKind,isAnimatedImage};return;}
   function text(code,fallback){
     const i18n=scope.aemeathI18n;
     return i18n?i18n.t(scope.imageSettings&&scope.imageSettings.locale,code):fallback;
@@ -83,10 +99,15 @@
   }
   async function importImage(file,kind){
     if(file.size>30*1024*1024)throw new Error(text('fileTooLarge','请选择小于 30 MB 的图片。'));
-    if(!imageKind(file))throw new Error(text('fileType','请选择 PNG、JPEG、WebP、GIF、BMP 或 AVIF 图片。'));
+    const kindName=imageKind(file);
+    if(!kindName)throw new Error(text('fileType','请选择 PNG、JPEG、WebP、GIF、BMP 或 AVIF 图片。'));
+    const bytes=new Uint8Array(await file.arrayBuffer());
     const url=URL.createObjectURL(file),img=new Image();
     try{
       img.src=url;await img.decode();
+      if(kind==='artwork'&&(kindName==='gif'||isAnimatedImage(bytes))){
+        return {artworkBlob:new Blob([bytes],{type:file.type||('image/'+kindName)}),artwork:undefined,animated:true,contours:undefined};
+      }
       const canvas=document.createElement('canvas');canvas.width=kind==='avatar'?512:1536;canvas.height=kind==='avatar'?512:1024;
       const ctx=canvas.getContext('2d');ctx.fillStyle='#08060d';ctx.fillRect(0,0,canvas.width,canvas.height);
       const scale=Math.max(canvas.width/img.naturalWidth,canvas.height/img.naturalHeight);
@@ -94,7 +115,7 @@
       ctx.drawImage(img,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
       const image=canvas.toDataURL('image/jpeg',kind==='avatar'?0.92:0.85);
       if(kind==='avatar')return {avatar:image};
-      return {artwork:image,contours:undefined};
+      return {artwork:image,artworkBlob:undefined,animated:false,contours:undefined};
     }catch(error){throw new Error(error.message||text('unreadable','图片无法读取，请换一张图片。'));}
     finally{URL.revokeObjectURL(url);}
   }

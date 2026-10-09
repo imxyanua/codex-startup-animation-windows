@@ -49,6 +49,22 @@
   root.dataset.locale = locale;
   const hud = $('.hud'), intro = $('.intro'), sweep = $('.light-sweep');
   const slider = $('#timeline'), pause = $('#pause'), subtitle = $('.subtitle');
+  let liveArtworkUrl='',liveArtworkKey='';
+  function artworkSource(images){
+    const key=images&&images.artworkBlob instanceof Blob?('blob:'+images.artworkBlob.size+':'+images.artworkBlob.type):(images&&images.artwork)||'';
+    if(key&&key===liveArtworkKey&&liveArtworkUrl)return liveArtworkUrl;
+    if(liveArtworkUrl){URL.revokeObjectURL(liveArtworkUrl);liveArtworkUrl='';liveArtworkKey='';}
+    if(images&&images.artworkBlob instanceof Blob){
+      liveArtworkUrl=URL.createObjectURL(images.artworkBlob);
+      liveArtworkKey=key;
+      return liveArtworkUrl;
+    }
+    return (images&&images.artwork)||assets.artwork;
+  }
+  function artMotionOpacity(color,assembling){
+    if(root.dataset.animated!=='1')return color;
+    return Math.max(color,clamp(assembling)*0.34);
+  }
   slider.max=String(duration/1000);
   let playing = false, elapsed = 0, origin = 0, frame = 0, lastUI = -Infinity;
   let completed = false, hiddenPause = false, mode = 'preview', loaded = false, revealed = false;
@@ -442,7 +458,7 @@
     if(s>=4.18&&s<7.43)trace(reduced?1:assembling,s-4.18,reduced?1:dissolve);
     if(s>=4.74&&identityTexture)releaseIdentityTexture();
     canvas.style.opacity=String((reduced?smooth((s-4.18)/.56):s>=4.18?1:0)*(1-color));
-    art.style.opacity=String(color);
+    art.style.opacity=String(artMotionOpacity(color,assembling));
     art.style.clipPath='none';
     art.style.transform=reduced?'none':`scale(${1+.012*smooth((s-7.42)/3.58)})`;
     $('.shade').style.opacity=String(color);
@@ -459,7 +475,7 @@
     if(s>=4.22&&s<7.55)traceSeek(reduced?1:assembling,s-4.22,reduced?1:dissolve);
     if(s>=4.85&&identityTexture)releaseIdentityTexture();
     canvas.style.opacity=String((reduced?smooth((s-4.22)/.7):s>=4.22?1:0)*(1-color));
-    art.style.opacity=String(color);
+    art.style.opacity=String(artMotionOpacity(color,assembling));
     art.style.clipPath=reduced||develop>=1?'none':`circle(${8+92*develop}% at 50% 46%)`;
     art.style.transform=reduced?'none':`scale(${1.03-0.03*develop})`;
     $('.shade').style.opacity=String(color*.85);
@@ -473,7 +489,7 @@
     if(s>=4.2&&s<7.6)traceRipple(reduced?1:assembling);
     if(s>=4.8&&identityTexture)releaseIdentityTexture();
     canvas.style.opacity=String((reduced?smooth((s-4.2)/.7):s>=4.2?1:0)*(1-color));
-    art.style.opacity=String(color);
+    art.style.opacity=String(artMotionOpacity(color,assembling));
     art.style.clipPath=reduced||develop>=1?'none':`circle(${6+94*develop}% at 50% 48%)`;
     art.style.transform=reduced?'none':`scale(${1.04-.04*develop})`;
     $('.shade').style.opacity=String(color*.85);
@@ -487,7 +503,7 @@
     if(s>=4.25&&s<7.7)traceVeil(reduced?1:assembling);
     if(s>=4.9&&identityTexture)releaseIdentityTexture();
     canvas.style.opacity=String((reduced?smooth((s-4.25)/.7):s>=4.25?1:0)*(1-color));
-    art.style.opacity=String(color);
+    art.style.opacity=String(artMotionOpacity(color,assembling));
     art.style.clipPath=reduced||lift>=1?'none':`inset(${(1-lift)*100}% 0 0 0)`;
     art.style.transform=reduced?'none':`translateY(${(1-lift)*18}px)`;
     $('.shade').style.opacity=String(color*.9);
@@ -620,7 +636,7 @@
   }
   function thumbnails(){
     $('#avatar-preview').src=pendingImages.avatar||assets.avatar;
-    $('#artwork-preview').src=pendingImages.artwork||assets.artwork;
+    $('#artwork-preview').src=artworkSource(pendingImages);
     $('#wallpaper-strength').value=String(pendingImages.wallpaperStrength??42);
     $('#wallpaper-value').textContent=$('#wallpaper-strength').value+'%';
     $('#playback-duration').value=String(Math.round((pendingImages.durationMs??authoredDuration)/1000));
@@ -666,7 +682,8 @@
   }
   async function applyImages(images){
     releaseIdentityTexture();
-    art.src=images.artwork||assets.artwork;$('.avatar').src=images.avatar||assets.avatar;
+    art.src=artworkSource(images);$('.avatar').src=images.avatar||assets.avatar;
+    root.dataset.animated=images.animated||images.artworkBlob?'1':'';
     await Promise.all([art,$('.avatar')].map(img=>img.decode()));
     const traced=window.imageSettings&&window.imageSettings.traceImage?window.imageSettings.traceImage(art):[];
     const raw=traced.length?traced:(images.contours||window.CONTOUR_PATHS||[]);
@@ -678,10 +695,14 @@
     if(!paths.length)throw new Error(t('missingContours'));
     for(const field of textFields)$(field.target).textContent=textValue(images,field);
     $('.boot-title').classList.toggle('long-title',Array.from(textValue(images,textFields[0])).length>6);
-    const wallpaperCanvas=document.createElement('canvas');
-    wallpaperCanvas.width=1536;wallpaperCanvas.height=1024;
-    wallpaperCanvas.getContext('2d').drawImage(art,0,0,1536,1024);
-    send('background',{image:wallpaperCanvas.toDataURL('image/jpeg',0.72),strength:images.wallpaperStrength??42});
+    if(images.artworkBlob instanceof Blob){
+      send('background',{blob:images.artworkBlob,strength:images.wallpaperStrength??42});
+    }else{
+      const wallpaperCanvas=document.createElement('canvas');
+      wallpaperCanvas.width=1536;wallpaperCanvas.height=1024;
+      wallpaperCanvas.getContext('2d').drawImage(art,0,0,1536,1024);
+      send('background',{image:wallpaperCanvas.toDataURL('image/jpeg',0.72),strength:images.wallpaperStrength??42});
+    }
     if(!params.has('duration'))playbackDuration=clampDuration(images.durationMs??authoredDuration);
   }
   for(const field of textFields)$(field.input).addEventListener('input',event=>{
@@ -733,7 +754,7 @@
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     try{
       pendingImages={...pendingImages,...await window.imageSettings.importImage(file,kind)};
-      if(kind==='artwork')delete pendingImages.contours;
+      if(kind==='artwork'){delete pendingImages.contours;if(pendingImages.animated)delete pendingImages.artwork;}
       thumbnails();
       setStatus('imageReady');
     }catch(error){setStatus('',error.message);}

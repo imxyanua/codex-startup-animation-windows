@@ -5,6 +5,7 @@ import {wallpaperDataUrl} from '../extension/renderer.mjs';
 test('壁纸只接受本机 data URL 图片',()=>{
   assert.ok(wallpaperDataUrl('data:image/jpeg;base64,/9j/4AAQ'));
   assert.ok(wallpaperDataUrl('data:image/png;base64,iVBOR'));
+  assert.ok(wallpaperDataUrl('data:image/gif;base64,R0lG'));
   assert.equal(wallpaperDataUrl('blob:app://-/123'),'');
   assert.equal(wallpaperDataUrl('https://example.com/cat.jpg'),'');
   assert.equal(wallpaperDataUrl('assets/artwork.jpg'),'');

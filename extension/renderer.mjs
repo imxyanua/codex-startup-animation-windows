@@ -10,7 +10,7 @@ export function installRenderer(payload, mount) {
   const style=document.createElement('style');style.id='aemeath-extension-style';style.textContent=payload.skin;
   const asWallpaper=value=>{
     const image=typeof value==='string'?value.trim():'';
-    return /^data:image\/(?:png|jpe?g|webp);base64,/i.test(image)?image:'';
+    return /^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(image)?image:'';
   };
   function removeOverlay(){
     clearTimeout(watchdog);observer?.disconnect();observer=null;
@@ -26,16 +26,21 @@ export function installRenderer(payload, mount) {
     delete window.__aemeathExtension;
   }
   function background(data){
-    const image=asWallpaper(data.image);
-    if(!image)return;
+    const blob=data.blob instanceof Blob?data.blob:null;
+    const image=blob?'':asWallpaper(data.image);
+    if(!blob&&!image)return;
     if(!style.isConnected)document.head.appendChild(style);
     const strength=Number.isFinite(data.strength)?Math.max(0,Math.min(75,data.strength)):42;
-    // Large data URLs exceed CSS custom-property token limits in Chromium.
-    // A short local Blob URL also avoids copying megabytes into each style value.
-    if(strength>0&&image!==lastImage){
-      const comma=image.indexOf(','),mime=image.slice(5,image.indexOf(';'))||'image/jpeg';
-      const bytes=Uint8Array.from(atob(image.slice(comma+1)),c=>c.charCodeAt(0));
-      const previous=wallpaperURL;wallpaperURL=URL.createObjectURL(new Blob([bytes],{type:mime}));lastImage=image;
+    const token=blob?('blob:'+blob.size+':'+blob.type):image;
+    if(strength>0&&token!==lastImage){
+      const previous=wallpaperURL;
+      if(blob)wallpaperURL=URL.createObjectURL(blob);
+      else {
+        const comma=image.indexOf(','),mime=image.slice(5,image.indexOf(';'))||'image/jpeg';
+        const bytes=Uint8Array.from(atob(image.slice(comma+1)),c=>c.charCodeAt(0));
+        wallpaperURL=URL.createObjectURL(new Blob([bytes],{type:mime}));
+      }
+      lastImage=token;
       root.style.setProperty('--aemeath-wallpaper',`url(${JSON.stringify(wallpaperURL)})`);
       if(previous)URL.revokeObjectURL(previous);
     }
@@ -90,5 +95,5 @@ export function installRenderer(payload, mount) {
 
 export function wallpaperDataUrl(value){
   const image=typeof value==='string'?value.trim():'';
-  return /^data:image\/(?:png|jpe?g|webp);base64,/i.test(image)?image:'';
+  return /^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(image)?image:'';
 }
