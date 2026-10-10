@@ -9,6 +9,7 @@
   <script src="assets/contours.js" defer></script>
   <script src="locale.js" defer></script>
   <script src="accent.js" defer></script>
+  <script src="audio.js" defer></script>
   <script src="image-settings.js" defer></script>
   <script src="animation.js" defer></script>
 </head>
@@ -61,6 +62,8 @@
         <div class="boot-logs classic-logs"><div>&gt; MAGI SYSTEM · CASPER / MELCHIOR / BALTHASAR</div><div>&gt; loading renderer surface ........ ok</div><div>&gt; entry plug depth 21.6 ........... ok</div><div>&gt; LCL pressure nominal</div></div>
         <div class="boot-logs seek-logs"><div>&gt; catalog wake · residual heat</div><div>&gt; proper motion matched .......... ok</div><div>&gt; orbit locked on a single face</div><div>&gt; light, stay</div></div>
         <div class="effect-veil" aria-hidden="true"></div>
+        <div class="holo-floor" aria-hidden="true"></div>
+        <div class="holo-scan" aria-hidden="true"></div>
         <div class="transition-flash" aria-hidden="true"></div>
       </div>
       <div class="shutter-line" aria-hidden="true"></div>
@@ -83,6 +86,7 @@
           <label class="effect-choice"><input type="radio" name="introEffect" value="seeklight" checked><span data-i18n="introSeek">寻光</span><small data-i18n="introSeekHint">星点 · 锁定</small></label>
           <label class="effect-choice"><input type="radio" name="introEffect" value="ripple"><span data-i18n="introRipple">涟漪</span><small data-i18n="introRippleHint">水环 · 头像</small></label>
           <label class="effect-choice"><input type="radio" name="introEffect" value="veil"><span data-i18n="introVeil">雾散</span><small data-i18n="introVeilHint">薄雾 · 升起</small></label>
+          <label class="effect-choice"><input type="radio" name="introEffect" value="holo"><span data-i18n="introHolo">全息</span><small data-i18n="introHoloHint">扫描 · 接口</small></label>
         </div>
         <p class="settings-section" data-i18n="revealGroup">后半段出现</p>
         <div class="effect-choices effect-row" role="radiogroup" aria-label="后半段出现" data-i18n-aria="revealGroup">
@@ -90,6 +94,7 @@
           <label class="effect-choice"><input type="radio" name="revealEffect" value="seeklight" checked><span data-i18n="revealSeek">寻光</span><small data-i18n="revealSeekHint">星座 · 显影</small></label>
           <label class="effect-choice"><input type="radio" name="revealEffect" value="ripple"><span data-i18n="revealRipple">涟漪</span><small data-i18n="revealRippleHint">圆环 · 显影</small></label>
           <label class="effect-choice"><input type="radio" name="revealEffect" value="veil"><span data-i18n="revealVeil">雾散</span><small data-i18n="revealVeilHint">薄雾 · 升起</small></label>
+          <label class="effect-choice"><input type="radio" name="revealEffect" value="holo"><span data-i18n="revealHolo">全息</span><small data-i18n="revealHoloHint">网格 · 实体化</small></label>
         </div>
         <p class="settings-section" data-i18n="accentGroup">画面色彩</p>
         <div class="effect-choices accent-choices" role="radiogroup" aria-label="画面色彩" data-i18n-aria="accentGroup">
@@ -99,6 +104,7 @@
           <label class="effect-choice"><input type="radio" name="accent" value="custom"><i class="accent-swatch accent-swatch-custom"></i><span data-i18n="accentCustom">自定义</span><small data-i18n="accentCustomHint">自选颜色</small></label>
         </div>
         <label class="accent-picker" for="accent-color"><span data-i18n="accentPicker">自定义颜色</span><input id="accent-color" type="color" value="#e9a8bf"></label>
+        <label class="sound-toggle" for="boot-sound"><input id="boot-sound" type="checkbox" checked><span data-i18n="soundToggle">开场音效</span><small data-i18n="soundHint">本地合成，不读取音频文件。Esc 立即静音。</small></label>
         <div class="image-choices">
           <label class="image-choice"><img id="avatar-preview" src="assets/avatar.jpg" alt="当前头像" data-i18n-alt="avatarAlt"><span data-i18n="avatarLabel">前半段头像</span><small data-i18n="avatarHint">方形图片效果最好</small><span class="choose-label" data-i18n="avatarChoose">更换头像</span><input id="avatar-file" type="file" accept=".jpg,.jpeg,.jfif,.png,.webp,.gif,.bmp,.avif,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif" aria-label="更换头像" data-i18n-aria="avatarChoose"></label>
           <label class="image-choice"><img id="artwork-preview" src="assets/artwork.jpg" alt="当前背景" data-i18n-alt="artworkAlt"><span data-i18n="artworkLabel">后半段背景</span><small data-i18n="artworkHint">推荐 3:2 横图 · 自动生成线稿</small><span class="choose-label" data-i18n="artworkChoose">更换背景</span><input id="artwork-file" type="file" accept=".jpg,.jpeg,.jfif,.png,.webp,.gif,.bmp,.avif,image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif" aria-label="更换背景" data-i18n-aria="artworkChoose"></label>

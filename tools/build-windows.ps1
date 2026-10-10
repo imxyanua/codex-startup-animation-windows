@@ -9,7 +9,7 @@ $out = Join-Path (Get-Location) 'dist\windows'
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $out 'windows'), (Join-Path $out 'extension'), (Join-Path $out 'assets'), (Join-Path $out 'tools') | Out-Null
 
-Copy-Item index.html, style.css, animation.js, image-settings.js, locale.js, accent.js $out
+Copy-Item index.html, style.css, animation.js, image-settings.js, locale.js, accent.js, audio.js $out
 Copy-Item assets\artwork.jpg, assets\avatar.jpg, assets\contours.js (Join-Path $out 'assets')
 Copy-Item extension\*.mjs, extension\wallpaper.css (Join-Path $out 'extension')
 Copy-Item windows\*.mjs (Join-Path $out 'windows')
