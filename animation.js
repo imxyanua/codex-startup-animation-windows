@@ -12,10 +12,11 @@
     return Number.isFinite(n) ? Math.max(min, Math.min(20000, Math.round(n))) : authoredDuration;
   };
   let playbackDuration = params.has('duration') ? clampDuration(params.get('duration'), 3000) : authoredDuration;
-  const allowedEffect = {classic:1,seeklight:1,ripple:1,veil:1};
+  const allowedEffect = {classic:1,seeklight:1,ripple:1,veil:1,holo:1};
   const normalizeEffect = value => value==='iris'?'seeklight':(allowedEffect[value] ? value : 'seeklight');
   let introEffect = normalizeEffect(params.get('intro')||params.get('effect'));
   let revealEffect = normalizeEffect(params.get('reveal')||params.get('effect'));
+  let soundOn = params.get('sound')!=='0';
   const i18n = window.aemeathI18n || {normalize: value => value === 'vi' ? 'vi' : 'zh', t: (_, key) => key};
   const normalizeLocale = value => i18n.normalize(value);
   let locale = normalizeLocale(params.get('lang') || params.get('locale'));
@@ -337,6 +338,22 @@
     ctx.globalAlpha=1;
     canvas.dataset.progress=p.toFixed(3);
   }
+  function traceHolo(p){
+    const stamp='holo'+p.toFixed(3);
+    if(stamp===lastTrace)return;lastTrace=stamp;
+    ctx.clearRect(0,0,1536,1024);
+    ctx.save();
+    ctx.beginPath();
+    const cut=80+p*980;
+    ctx.rect(768-cut,0,cut*2,1024);ctx.clip();
+    ctx.strokeStyle=accentPaint('--accent-cool','#9ec9d6');ctx.lineWidth=1.15;ctx.lineCap='butt';
+    ctx.setLineDash([5,8]);ctx.lineDashOffset=-p*120;ctx.globalAlpha=.82;
+    paths.forEach(path=>ctx.stroke(path.full));
+    ctx.setLineDash([]);ctx.strokeStyle=accentPaint('--accent-hud','#fce9f0');ctx.lineWidth=1;ctx.globalAlpha=.35;
+    ctx.beginPath();ctx.moveTo(768-cut,40);ctx.lineTo(768-cut,984);ctx.moveTo(768+cut,40);ctx.lineTo(768+cut,984);ctx.stroke();
+    ctx.restore();ctx.globalAlpha=1;
+    canvas.dataset.progress=p.toFixed(3);
+  }
   function closeOut(s,scale=true){
     const collapse=smooth((s-11)/.32),pinch=smooth((s-11.65)/.35),closing=s>=11;
     root.classList.toggle('closing',closing);document.body.classList.toggle('closing',closing);
@@ -452,6 +469,36 @@
       node.style.transform=`translate(${Math.sin(s*.1+i)*8}px,${-s*(1.5+i%3)}px)`;
     });
   }
+  function renderIntroHolo(s){
+    $('.identity').style.opacity=String(smooth((s-1.02)/.7));
+    $('.identity').style.transform=`translate(-50%,-43%) scale(${.86+.14*smooth((s-1.02)/.7)})`;
+    $('.avatar-frame').style.transform=`skewX(${Math.sin(s*18)*0.6}deg)`;
+    $('.avatar-frame').style.clipPath=`inset(${(1-smooth((s-1.15)/.85))*50}% 0 ${(1-smooth((s-1.15)/.85))*50}% 0)`;
+    $('.pulse').style.opacity=String(1-smooth((s-1.25)/.5));
+    const core=$('.seek-core');
+    if(core){
+      core.style.opacity=String(s<4.35?1-smooth((s-1.05)/.75):0);
+      core.querySelector('b').style.transform=`translate(-50%,-50%) scale(${1+smooth(s/1.3)*1.8})`;
+      core.querySelector('i').style.opacity=String(smooth((s-.12)/.4)*(1-smooth((s-1.6)/.5)));
+      core.querySelector('i').style.transform=`translate(-50%,-50%) scale(${.45+s*.22})`;
+    }
+    $('.dashed').style.transformOrigin='200px 200px';$('.dashed').style.transform=`rotate(${reduced?0:s*28}deg)`;
+    const glitch=reduced?0:(Math.sin(s*40)>0.82?8:0);
+    $('.boot-title').style.clipPath='none';
+    $('.boot-title').style.opacity=String(smooth((s-1.55)/.45));
+    $('.boot-title').style.transform=`translateX(${glitch}px)`;
+    $('.boot-caption').style.opacity=String(smooth((s-2.2)/.35)*.6);
+    $('.wave').style.transform=`scaleY(${reduced?1:.3+.7*((s*3)%1)})`;
+    $('.classic-logs').style.opacity='0';
+    $('.seek-logs').style.opacity=String(.7);
+    document.querySelectorAll('.seek-logs div').forEach((row,i)=>row.style.opacity=String(smooth((s-.15-i*.32)/.3)));
+    const scan=$('.holo-scan');
+    if(scan){scan.style.opacity=String(smooth((s-.3)/.4)*(1-smooth((s-3.8)/.5)));scan.style.transform=`translateY(${(-20+s*18)}%)`;}
+    stars.forEach((node,i)=>{
+      const born=smooth((s-.1-i*.06)/.35);
+      node.style.opacity=String(born*(.15+.4*(.5+.5*Math.sin(s*1.1+i))));
+    });
+  }
   function renderRevealClassic(t,color){
     const s=t/1000,dissolve=smooth((s-4.18)/.56),assembling=clamp((s-5.08)/2.02);
     $('.transition-flash').style.opacity=String(reduced?0:smooth((s-7.18)/.035)*(1-smooth((s-7.22)/.2))*.8);
@@ -514,6 +561,23 @@
       node.style.transform=`translate(${Math.sin(s*.3+i)*10}px,${-s*(6+i%4)}px)`;
     });
   }
+  function renderRevealHolo(t,color){
+    const s=t/1000,assembling=clamp((s-4.15)/2.45),develop=smooth((s-7.12)/.82);
+    $('.transition-flash').style.opacity=String(reduced?0:smooth((s-7.12)/.05)*(1-smooth((s-7.28)/.22))*.32);
+    if(s>=4.12&&s<7.55)traceHolo(reduced?1:assembling);
+    if(s>=4.75&&identityTexture)releaseIdentityTexture();
+    canvas.style.opacity=String((reduced?smooth((s-4.12)/.55):s>=4.12?1:0)*(1-color));
+    art.style.opacity=String(artMotionOpacity(color,assembling));
+    art.style.clipPath=reduced||develop>=1?'none':`polygon(${50-50*develop}% 50%,50% ${50-50*develop}%,${50+50*develop}% 50%,50% ${50+50*develop}%)`;
+    art.style.transform=reduced?'none':`scale(${1.04-.04*develop})`;
+    art.style.filter=color>0.08&&color<1?`drop-shadow(1px 0 ${accentPaint('--accent-cool','#8cc3cd')}) drop-shadow(-1px 0 ${accentPaint('--accent','#e9a8bf')})`:'none';
+    $('.shade').style.opacity=String(color*.75);
+    sweep.style.opacity=reduced?'0':String(Math.sin(clamp((s-7.12)/.9)*Math.PI)*.14);
+    sweep.style.transform=`translateX(${(-70+clamp((s-7.12)/.9)*140)}%)`;
+    const floor=$('.holo-floor');
+    if(floor)floor.style.opacity=String(smooth((s-4.2)/.6)*(1-color*.7));
+    particles.forEach(node=>{node.style.opacity='0';});
+  }
   for(let i=0;i<60;i++){
     const tick=document.createElementNS('http://www.w3.org/2000/svg','line');
     const angle=i*Math.PI/30,inner=i%5===0?181:184;
@@ -529,22 +593,28 @@
     if(introEffect==='classic')renderIntroClassic(s);
     else if(introEffect==='ripple')renderIntroRipple(s);
     else if(introEffect==='veil')renderIntroVeil(s);
+    else if(introEffect==='holo')renderIntroHolo(s);
     else renderIntroSeek(s);
-    if(introEffect!=='seeklight'&&introEffect!=='veil')stars.forEach(node=>{node.style.opacity='0';});
+    if(introEffect!=='seeklight'&&introEffect!=='veil'&&introEffect!=='holo')stars.forEach(node=>{node.style.opacity='0';});
     if(revealEffect==='classic')renderRevealClassic(t,color);
     else if(revealEffect==='ripple')renderRevealRipple(t,color);
     else if(revealEffect==='veil')renderRevealVeil(t,color);
+    else if(revealEffect==='holo')renderRevealHolo(t,color);
     else renderRevealSeek(t,color);
+    const scan=$('.holo-scan');if(scan&&introEffect!=='holo')scan.style.opacity='0';
+    const floor=$('.holo-floor');if(floor&&revealEffect!=='holo')floor.style.opacity='0';
+    if(color>=1)art.style.filter='none';
     const veil=$('.effect-veil');
     if(veil)veil.style.opacity=(introEffect==='veil'||revealEffect==='veil')?String((1-color)*(.5+.2*Math.sin(s*.8))):'0';
     hud.style.opacity=String(smooth((s-7.4)/.5));
     $('.sync-fill').style.transform=`scaleX(${p})`;
     subtitle.style.opacity=String(smooth((s-7.7)/.45)*(1-smooth((s-10.65)/.25)));
     closeOut(s,revealEffect!=='classic');
-    paintHud(t,s<6.4?'INITIALIZING':p<1?'SYNCHRONIZING':'SYNC COMPLETE',s>=11?'shutter':s<4.2?'intro':s<7.2?'reveal':'portrait');
+    const holo=introEffect==='holo'||revealEffect==='holo';
+    paintHud(t,s<6.4?(holo?'LINKING':'INITIALIZING'):p<1?(holo?'MATERIALIZE':'SYNCHRONIZING'):'SYNC COMPLETE',s>=11?'shutter':s<4.2?'intro':s<7.2?'reveal':'portrait');
   }
   function updateButton() { pause.textContent=playing?t('pause'):t('resume'); root.dataset.playing=String(playing); }
-  function stop() { playing=false; cancelAnimationFrame(frame); frame=0; updateButton(); }
+  function stop() { playing=false; cancelAnimationFrame(frame); frame=0; updateButton(); if(window.aemeathAudio)window.aemeathAudio.stop(); }
   function finish(skipped=false) {
     skippedFinish=skipped;
     stop(); elapsed=duration; render(elapsed); completed=true;
@@ -573,6 +643,7 @@
     warmIdentityTexture();
     completed=false; root.classList.remove('finished'); root.dataset.completed='false';
     pause.disabled=false; origin=performance.now()-elapsed*playbackDuration/authoredDuration; playing=true;updateButton();
+    if(window.aemeathAudio)window.aemeathAudio.play({from:elapsed,duration:playbackDuration,muted:!soundOn,rich:introEffect==='holo'||revealEffect==='holo'});
     cancelAnimationFrame(frame);frame=requestAnimationFrame(tick);
   }
   function replay(){revealed=false;hiddenPause=false;stop();elapsed=0;lastUI=-Infinity;render(0);play();}
@@ -651,6 +722,7 @@
     document.querySelectorAll('input[name=accent]').forEach(node=>{node.checked=node.value===chosenAccent;});
     const pack=resolveAccent(pendingImages.accent,pendingImages.accentColor);
     $('#accent-color').value=pack.accent;
+    $('#boot-sound').checked=pendingImages.sound!==false;
     for(const field of textFields)$(field.input).value=textValue(pendingImages,field);
   }
   function setEffects(images={}){
@@ -692,6 +764,8 @@
     else setEffects({effect:params.get('effect'),introEffect:params.get('intro'),revealEffect:params.get('reveal')});
     applyAccent((params.has('accent')||params.has('color'))?{accent:params.get('accent'),accentColor:params.get('color')}:images);
     applyLocale((params.has('lang')||params.has('locale'))?locale:images.locale);
+    if(typeof images.sound==='boolean')soundOn=images.sound;
+    $('#boot-sound').checked=soundOn;
     if(!paths.length)throw new Error(t('missingContours'));
     for(const field of textFields)$(field.target).textContent=textValue(images,field);
     $('.boot-title').classList.toggle('long-title',Array.from(textValue(images,textFields[0])).length>6);
@@ -733,6 +807,7 @@
     pendingImages.accent=normalizeAccent(node.value);
     applyAccent(pendingImages);thumbnails();
   }));
+  $('#boot-sound').addEventListener('change',()=>{pendingImages.sound=$('#boot-sound').checked;soundOn=pendingImages.sound;});
   $('#accent-color').addEventListener('input',event=>{
     pendingImages.accent='custom';
     pendingImages.accentColor=parseAccentHex(event.target.value)||'#e9a8bf';
@@ -768,6 +843,8 @@
       pendingImages.introEffect=normalizeEffect(pendingImages.introEffect||pendingImages.effect);
       pendingImages.revealEffect=normalizeEffect(pendingImages.revealEffect||pendingImages.effect);
       pendingImages.effect=pendingImages.introEffect;
+      pendingImages.sound=$('#boot-sound').checked;
+      soundOn=pendingImages.sound;
       pendingImages.accent=normalizeAccent(pendingImages.accent);
       if(pendingImages.accent==='custom')pendingImages.accentColor=parseAccentHex(pendingImages.accentColor)||'#e9a8bf';
       delete pendingImages.contours;

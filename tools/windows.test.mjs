@@ -154,6 +154,13 @@ test('画面色彩支持预设和自定义 hex',()=>{
   assert.equal(resolveAccent('custom','bad').accent,'#e9a8bf');
 });
 
+test('开场音效模块可静音停止',()=>{
+  const audio=require('../audio.js');
+  assert.equal(typeof audio.play,'function');
+  audio.play({muted:true,duration:3000,from:0});
+  audio.stop();
+});
+
 test('菜单支持中文和越南语',()=>{
   assert.equal(normalizeLocale('vi'),'vi');
   assert.equal(normalizeLocale('zh'),'zh');
@@ -179,6 +186,8 @@ test('注入脚本包含语言选项和越南语词条',async()=>{
   assert.match(source,/name=\\"revealEffect\\"/);
   assert.match(source,/value=\\"ripple\\"/);
   assert.match(source,/value=\\"veil\\"/);
+  assert.match(source,/value=\\"holo\\"/);
+  assert.match(source,/aemeathAudio/);
   assert.doesNotMatch(source,/value=\\"iris\\"/);
 });
 
