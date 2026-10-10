@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {createServer,request as httpRequest} from 'node:http';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {mkdtemp,writeFile,rm} from 'node:fs/promises';
+import {mkdtemp,writeFile,rm,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {
   assertLoopbackListener,assertSafeDebugArgs,commandLineHasDebugPort,debuggingArgs,executableBelongsToInstall,
@@ -21,6 +21,14 @@ const {vectorize,imageKind,isAnimatedImage}=require('../image-settings.js');
 const {normalize:normalizeLocale,t:translate}=require('../locale.js');
 const {normalize:normalizeAccent,parseHex:parseAccentHex,resolve:resolveAccent}=require('../accent.js');
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
+
+test('仓库入口用 VBS 隐藏窗口启动',async()=>{
+  const cmd=await readFile(join(root,'扩展启动Codex.cmd'),'utf8');
+  const vbs=await readFile(join(root,'扩展启动Codex.vbs'),'utf8');
+  assert.match(cmd,/wscript\.exe/i);
+  assert.match(vbs,/CodexStartup\.exe/);
+  assert.match(vbs,/0, False/);
+});
 
 test('调试参数只绑定 127.0.0.1',()=>{
   assert.deepEqual(debuggingArgs(9341),['--remote-debugging-address=127.0.0.1','--remote-debugging-port=9341']);
