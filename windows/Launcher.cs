@@ -1,17 +1,25 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
 internal static class Program
 {
+    const string Aumid = "imxyanua.CodexStartup";
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    static extern int SetCurrentProcessExplicitAppUserModelID(string appID);
+
     [STAThread]
     static int Main(string[] args)
     {
         try
         {
+            SetCurrentProcessExplicitAppUserModelID(Aumid);
             var root = FindRoot(AppDomain.CurrentDomain.BaseDirectory);
+            InstallShortcut(root);
             var script = Path.Combine(root, "windows", "run.mjs");
             var node = FindNode(root);
             var probe = Array.Exists(args, item => item == "--probe");
@@ -24,6 +32,7 @@ internal static class Program
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 CreateNoWindow = !probe,
+                WindowStyle = probe ? ProcessWindowStyle.Normal : ProcessWindowStyle.Hidden,
                 StandardOutputEncoding = Encoding.UTF8,
                 StandardErrorEncoding = Encoding.UTF8
             };
@@ -42,16 +51,47 @@ internal static class Program
                 }
                 if (process.ExitCode != 0)
                 {
-                    MessageBox.Show(string.IsNullOrEmpty(text) ? "启动扩展失败。" : text, "Codex", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(string.IsNullOrEmpty(text) ? "启动扩展失败。" : text, "Codex Startup", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 return process.ExitCode;
             }
         }
         catch (Exception error)
         {
-            MessageBox.Show(error.Message, "Codex", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(error.Message, "Codex Startup", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return 1;
         }
+    }
+
+    static void InstallShortcut(string root)
+    {
+        try
+        {
+            var exe = Process.GetCurrentProcess().MainModule.FileName;
+            if (string.IsNullOrEmpty(exe) || !File.Exists(exe)) return;
+            var type = Type.GetTypeFromProgID("WScript.Shell");
+            if (type == null) return;
+            dynamic shell = Activator.CreateInstance(type);
+            var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+            Directory.CreateDirectory(programs);
+            WriteShortcut(shell, Path.Combine(programs, "Codex Startup.lnk"), exe, root);
+            var distLink = Path.Combine(Path.GetDirectoryName(exe) ?? root, "Codex Startup.lnk");
+            WriteShortcut(shell, distLink, exe, root);
+        }
+        catch
+        {
+            // Shortcut is optional; launching Codex still works.
+        }
+    }
+
+    static void WriteShortcut(dynamic shell, string path, string exe, string root)
+    {
+        var shortcut = shell.CreateShortcut(path);
+        shortcut.TargetPath = exe;
+        shortcut.WorkingDirectory = root;
+        shortcut.WindowStyle = 7;
+        shortcut.Description = "Launch Codex with startup animation";
+        shortcut.Save();
     }
 
     static string FindRoot(string start)

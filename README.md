@@ -43,9 +43,10 @@ powershell -ExecutionPolicy Bypass -File tools\build-windows.ps1
 
 | 文件 | 用途 |
 | --- | --- |
-| `dist\windows\CodexStartup.exe` | 启动 Codex 并播放动画 |
+| `dist\windows\CodexStartup.exe` | 启动 Codex 并播放动画（无控制台窗口） |
+| `dist\windows\Codex Startup.lnk` | 开始菜单 / 任务栏请固定这个快捷方式 |
 | `dist\windows\AemeathPreview.exe` | 独立动画预览 |
-| `扩展启动Codex.cmd` / `预览动画.cmd` | 仓库根目录双击入口 |
+| `扩展启动Codex.vbs` | 无窗口启动；`.cmd` 只是转给它 |
 
 不编译也可以：
 
@@ -56,12 +57,12 @@ node windows\preview.mjs
 
 使用步骤：
 
-1. 保存工作，从系统托盘**完全退出**正在运行的官方 ChatGPT / Codex。
-2. 双击 `扩展启动Codex.cmd`，或打开 `CodexStartup.exe`。
+1. 运行一次 `tools\build-windows.ps1`，开始菜单会出现 **Codex Startup**。把它固定到任务栏，不要固定已经打开的 Codex 窗口。
+2. 之后点任务栏上的 **Codex Startup**（或双击 `扩展启动Codex.vbs`）。若 Codex 已在运行，启动器会先退出再带动画打开。
 3. 官方页面与动画并行加载；动画结束后进入正常页面。
-4. 只检查动画时，运行 `预览动画.cmd` 或用浏览器打开 `index.html`。
+4. 只检查动画时，运行 `预览动画.vbs` 或用浏览器打开 `index.html`。
 
-直接打开官方图标不会加载本项目的动画。
+任务栏上的官方 Codex / ChatGPT 图标走的是原版入口，不会播放本动画。
 
 ### 图片与文字设置
 
@@ -158,7 +159,7 @@ Mặc định「寻光」khoảng 12 giây. Nửa đầu (avatar) và nửa sau 
 - Chỉnh độ hiện nền; thời lượng 6–20 giây (timeline gốc vẫn 12s).
 - Esc hoặc nút skip để bỏ qua.
 - Inject lỗi thì mở Codex bình thường.
-- App đang chạy thì chỉ đưa cửa sổ có sẵn lên, không phát lại animation.
+- App đang chạy thì launcher thoát hẳn rồi mở lại kèm animation.
 
 Phím cài đặt: **Ctrl+Alt+B**.
 
@@ -180,9 +181,10 @@ powershell -ExecutionPolicy Bypass -File tools\build-windows.ps1
 
 | File | Việc dùng |
 | --- | --- |
-| `dist\windows\CodexStartup.exe` | Mở Codex kèm animation |
+| `dist\windows\CodexStartup.exe` | Mở Codex kèm animation (không cửa sổ console) |
+| `dist\windows\Codex Startup.lnk` | Ghim shortcut này lên taskbar |
 | `dist\windows\AemeathPreview.exe` | Xem animation không cần Codex |
-| `扩展启动Codex.cmd` / `预览动画.cmd` | Double-click ở gốc repo |
+| `扩展启动Codex.vbs` | Chạy ẩn; `.cmd` chỉ chuyển sang VBS |
 
 Không build cũng được:
 
@@ -193,12 +195,12 @@ node windows\preview.mjs
 
 Các bước:
 
-1. Lưu việc đang làm, **thoát hẳn** ChatGPT / Codex (kể cả icon khay).
-2. Chạy `扩展启动Codex.cmd` hoặc `CodexStartup.exe`.
+1. Chạy `tools\build-windows.ps1` một lần. Start Menu có **Codex Startup** — ghim cái đó, đừng ghim cửa sổ Codex đang mở.
+2. Lần sau bấm **Codex Startup** trên taskbar (hoặc `扩展启动Codex.vbs`). Nếu Codex đang chạy, launcher thoát rồi mở lại kèm animation.
 3. Animation chạy song song trang chính thức, xong thì vào giao diện thật.
-4. Chỉ xem animation: `预览动画.cmd` hoặc mở `index.html` trên trình duyệt.
+4. Chỉ xem animation: `预览动画.vbs` hoặc mở `index.html`.
 
-Mở icon gốc của OpenAI sẽ không tự gắn animation.
+Icon Codex / ChatGPT chính thức trên taskbar không phát animation của repo này.
 
 ### Ảnh và chữ
 
