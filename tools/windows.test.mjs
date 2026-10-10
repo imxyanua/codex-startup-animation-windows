@@ -17,7 +17,7 @@ import {previewPageTarget} from '../windows/smoke.mjs';
 import {previewArgs} from '../windows/preview.mjs';
 
 const require=createRequire(import.meta.url);
-const {vectorize,imageKind}=require('../image-settings.js');
+const {vectorize,imageKind,isAnimatedImage}=require('../image-settings.js');
 const {normalize:normalizeLocale,t:translate}=require('../locale.js');
 const {normalize:normalizeAccent,parseHex:parseAccentHex,resolve:resolveAccent}=require('../accent.js');
 const root=dirname(dirname(fileURLToPath(import.meta.url)));
@@ -180,6 +180,19 @@ test('注入脚本包含语言选项和越南语词条',async()=>{
   assert.match(source,/value=\\"ripple\\"/);
   assert.match(source,/value=\\"veil\\"/);
   assert.doesNotMatch(source,/value=\\"iris\\"/);
+});
+
+test('识别 GIF / 动态 WebP / APNG',()=>{
+  const gif=Uint8Array.from([0x47,0x49,0x46,0x38,0x39,0x61]);
+  assert.equal(isAnimatedImage(gif),true);
+  const jpeg=Uint8Array.from([0xFF,0xD8,0xFF,0xE0]);
+  assert.equal(isAnimatedImage(jpeg),false);
+  const webp=new Uint8Array(24);
+  webp.set([0x52,0x49,0x46,0x46,0,0,0,0,0x57,0x45,0x42,0x50,0x56,0x50,0x38,0x58]);
+  webp[20]=0x02;
+  assert.equal(isAnimatedImage(webp),true);
+  webp[20]=0;
+  assert.equal(isAnimatedImage(webp),false);
 });
 
 test('导入图片认 MIME 和 Windows 空 type/.jpg',()=>{

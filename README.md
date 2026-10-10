@@ -70,7 +70,7 @@ node windows\preview.mjs
 | 设置 | 说明 |
 | --- | --- |
 | 头像 | PNG / JPEG / WebP，导入时居中裁成 512×512 |
-| 背景 | PNG / JPEG / WebP，导入时居中裁成 1536×1024，并生成线稿 |
+| 背景 | PNG / JPEG / WebP / GIF / APNG；静态图居中裁成 1536×1024。GIF、动态 WebP、APNG 保留动画，线稿取首帧 |
 | 标题与字幕 | 修改两段动画的文字，留空则隐藏 |
 | 背景显现程度 | 默认 42%，0% 关闭壁纸 |
 | 开场动画时长 | 默认 12 秒；6–20 秒可调 |
@@ -207,7 +207,7 @@ Trong hoặc sau animation, bấm **Ctrl+Alt+B**.
 | Mục | Ý nghĩa |
 | --- | --- |
 | Avatar | PNG / JPEG / WebP, cắt giữa 512×512 |
-| Nền | PNG / JPEG / WebP, cắt giữa 1536×1024, tự tạo nét |
+| Nền | PNG / JPEG / WebP / GIF / APNG. Ảnh tĩnh cắt 1536×1024. GIF, WebP động, APNG giữ animation; nét lấy khung đầu |
 | Tiêu đề / phụ đề | Để trống thì ẩn |
 | Độ hiện nền | Mặc định 42%, 0% là tắt wallpaper |
 | Thời lượng | Mặc định 12 giây, chỉnh 6–20 giây |

@@ -97,3 +97,4 @@ body.embedded .end-screen,body.native.launch-mode.closing .end-screen{visibility
 .accent-swatch-custom{background:conic-gradient(from 90deg,#e9a8bf,#b7d8ea,#e0b15a,#e9a8bf)}
 .accent-picker{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 20px;font-size:12px;color:#c7aebb}
 .accent-picker input[type=color]{width:48px;height:28px;padding:0;border:1px solid #63465c;border-radius:6px;background:#241b26;cursor:pointer}
+.window[data-animated="1"] .line-art{mix-blend-mode:screen}
